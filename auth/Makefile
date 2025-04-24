@@ -1,0 +1,43 @@
+.PHONY: postgres
+postgres:
+	docker run --name postgres -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=admin -d postgres:alpine
+
+.PHONY: createdb
+createdb:
+	docker exec -it postgres createdb -U postgres --username=postgres --owner=postgres auth-service
+
+.PHONY: dropdb
+dropdb:
+	docker exec -it postgres dropdb -U postgres auth-service
+
+.PHONY: migrateup
+migrateup:
+	migrate -path internal/db/migrations -database "postgresql://postgres:admin@localhost:5432/auth-service?sslmode=disable" -verbose up $(or $(n))
+
+.PHONY: migratedown
+migratedown:
+	migrate -path internal/db/migrations -database "postgresql://postgres:admin@localhost:5432/auth-service?sslmode=disable" -verbose down $(or $(n))
+
+.PHONY: new_migration
+new_migration:
+	migrate create -ext sql -dir internal/db/migrations -seq $(name)
+
+.PHONY: sqlc
+sqlc:
+	sqlc generate
+
+.PHONY: mock
+mock:
+	mockgen -package mockdb -destination internal/db/mock/store.go github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/db/sqlc Store
+
+#@TODO: need to change this
+.PHONY: proto
+proto:
+	rm -f proto/gen/*.go
+	rm -f docs/swagger/*.swagger.json
+	protoc --proto_path=proto --go_out=proto/gen --go_opt=paths=source_relative \
+    --go-grpc_out=proto/gen --go-grpc_opt=paths=source_relative \
+	--grpc-gateway_out=proto/gen --grpc-gateway_opt=paths=source_relative \
+	--openapiv2_out=docs/swagger --openapiv2_opt=allow_merge=true,merge_file_name=go-ecommerce-ms \
+	proto/*.proto
+	statik -src=./docs/swagger -dest=./docs
