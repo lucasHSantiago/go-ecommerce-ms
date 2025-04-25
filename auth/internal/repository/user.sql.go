@@ -23,10 +23,10 @@ INSERT INTO users (
 `
 
 type CreateUserParams struct {
-	Username       string `json:"username"`
-	HashedPassword string `json:"hashed_password"`
-	FullName       string `json:"full_name"`
-	Email          string `json:"email"`
+	Username       string
+	HashedPassword string
+	FullName       string
+	Email          string
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -85,12 +85,12 @@ RETURNING username, role, hashed_password, full_name, email, is_email_verified, 
 `
 
 type UpdateUserParams struct {
-	HashedPassword    pgtype.Text        `json:"hashed_password"`
-	PasswordChangedAt pgtype.Timestamptz `json:"password_changed_at"`
-	FullName          pgtype.Text        `json:"full_name"`
-	Email             pgtype.Text        `json:"email"`
-	IsEmailVerified   pgtype.Bool        `json:"is_email_verified"`
-	Username          string             `json:"username"`
+	HashedPassword    pgtype.Text
+	PasswordChangedAt pgtype.Timestamptz
+	FullName          pgtype.Text
+	Email             pgtype.Text
+	IsEmailVerified   pgtype.Bool
+	Username          string
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {

@@ -9,22 +9,22 @@ import (
 )
 
 type User struct {
-	Username          string    `json:"username"`
-	Role              string    `json:"role"`
-	HashedPassword    string    `json:"hashed_password"`
-	FullName          string    `json:"full_name"`
-	Email             string    `json:"email"`
-	IsEmailVerified   bool      `json:"is_email_verified"`
-	PasswordChangedAt time.Time `json:"password_changed_at"`
-	CreatedAt         time.Time `json:"created_at"`
+	Username          string
+	Role              string
+	HashedPassword    string
+	FullName          string
+	Email             string
+	IsEmailVerified   bool
+	PasswordChangedAt time.Time
+	CreatedAt         time.Time
 }
 
 type VerifyEmail struct {
-	ID         int64     `json:"id"`
-	Username   string    `json:"username"`
-	Email      string    `json:"email"`
-	SecretCode string    `json:"secret_code"`
-	IsUsed     bool      `json:"is_used"`
-	CreatedAt  time.Time `json:"created_at"`
-	ExpiredAt  time.Time `json:"expired_at"`
+	ID         int64
+	Username   string
+	Email      string
+	SecretCode string
+	IsUsed     bool
+	CreatedAt  time.Time
+	ExpiredAt  time.Time
 }
