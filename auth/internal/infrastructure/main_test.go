@@ -1,4 +1,4 @@
-package repository
+package infrastructure
 
 import (
 	"context"
@@ -10,7 +10,20 @@ import (
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 )
 
-var testQueries *Queries
+type testRepositories struct {
+	connPool *pgxpool.Pool
+	user     *UserRepository
+}
+
+func (r *testRepositories) User() *UserRepository {
+	if r.user == nil {
+		r.user = NewUserRepository(r.connPool)
+	}
+
+	return r.user
+}
+
+var repositories testRepositories
 
 func TestMain(m *testing.M) {
 	var err error
@@ -25,6 +38,9 @@ func TestMain(m *testing.M) {
 		log.Fatal("cannot connect to db:", err)
 	}
 
-	testQueries = New(connPool)
+	repositories = testRepositories{
+		connPool: connPool,
+	}
+
 	os.Exit(m.Run())
 }

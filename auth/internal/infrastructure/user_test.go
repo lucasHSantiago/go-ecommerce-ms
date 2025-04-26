@@ -1,29 +1,30 @@
-package repository
+package infrastructure
 
 import (
 	"context"
 	"testing"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 	"github.com/stretchr/testify/require"
 )
 
-func createRandomUser(t *testing.T) User {
+func createRandomUser(t *testing.T) domain.User {
 	t.Helper()
 
 	hashedPassword, err := util.HashPassword(util.RandomString(6))
 	require.NoError(t, err)
 
-	arg := CreateUserParams{
+	arg := application.CreateUserParams{
 		Username:       util.RandomUsername(),
 		HashedPassword: hashedPassword,
 		FullName:       util.RandomUsername(),
 		Email:          util.RandomEmail(),
 	}
 
-	user, err := testQueries.CreateUser(context.Background(), arg)
+	user, err := repositories.User().CreateUser(context.Background(), arg)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, user)
@@ -36,17 +37,55 @@ func createRandomUser(t *testing.T) User {
 	require.True(t, user.PasswordChangedAt.IsZero())
 	require.NotZero(t, user.CreatedAt)
 
-	return user
+	return *user
 }
 
 func TestCreateUser(t *testing.T) {
 	createRandomUser(t)
 }
 
+func TestCreteUserSameUsername(t *testing.T) {
+	user := createRandomUser(t)
+
+	hashedPassword, err := util.HashPassword(util.RandomString(6))
+	require.NoError(t, err)
+
+	arg := application.CreateUserParams{
+		Username:       user.Username,
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomUsername(),
+		Email:          util.RandomEmail(),
+	}
+
+	createdUser, err := repositories.User().CreateUser(context.Background(), arg)
+	require.Error(t, err)
+	require.ErrorIs(t, err, domain.ErrUsernameAlreadyExist)
+	require.Nil(t, createdUser)
+}
+
+func TestCreteUserSameEmail(t *testing.T) {
+	user := createRandomUser(t)
+
+	hashedPassword, err := util.HashPassword(util.RandomString(6))
+	require.NoError(t, err)
+
+	arg := application.CreateUserParams{
+		Username:       util.RandomUsername(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomUsername(),
+		Email:          user.Email,
+	}
+
+	createdUser, err := repositories.User().CreateUser(context.Background(), arg)
+	require.Error(t, err)
+	require.ErrorIs(t, err, domain.ErrEmailAlreadyExist)
+	require.Nil(t, createdUser)
+}
+
 func TestGetUser(t *testing.T) {
 	user1 := createRandomUser(t)
 
-	user2, err := testQueries.GetUser(context.Background(), user1.Username)
+	user2, err := repositories.User().GetUser(context.Background(), user1.Username)
 	require.NoError(t, err)
 	require.NotEmpty(t, user2)
 
@@ -59,16 +98,20 @@ func TestGetUser(t *testing.T) {
 	require.WithinDuration(t, user1.CreatedAt, user2.CreatedAt, time.Second)
 }
 
+func TestUserNotFound(t *testing.T) {
+	user, err := repositories.User().GetUser(context.Background(), "not found")
+	require.Error(t, err)
+	require.ErrorIs(t, err, domain.ErrUserNotFound)
+	require.Nil(t, user)
+}
+
 func TestUpdateUserOnlyFullname(t *testing.T) {
 	oldUser := createRandomUser(t)
 	newFullName := util.RandomUsername()
 
-	updatedUser, err := testQueries.UpdateUser(context.Background(), UpdateUserParams{
+	updatedUser, err := repositories.User().UpdateUser(context.Background(), application.UpdateUserParams{
 		Username: oldUser.Username,
-		FullName: pgtype.Text{
-			String: newFullName,
-			Valid:  true,
-		},
+		FullName: &newFullName,
 	})
 
 	require.NoError(t, err)
@@ -82,12 +125,9 @@ func TestUpdateUserOnlyEmail(t *testing.T) {
 	oldUser := createRandomUser(t)
 	newEmail := util.RandomEmail()
 
-	updatedUser, err := testQueries.UpdateUser(context.Background(), UpdateUserParams{
+	updatedUser, err := repositories.User().UpdateUser(context.Background(), application.UpdateUserParams{
 		Username: oldUser.Username,
-		Email: pgtype.Text{
-			String: newEmail,
-			Valid:  true,
-		},
+		Email:    &newEmail,
 	})
 
 	require.NoError(t, err)
@@ -102,12 +142,9 @@ func TestUpdateUserOnlyPassword(t *testing.T) {
 	newHashedPassword, err := util.HashPassword(util.RandomString(6))
 	require.NoError(t, err)
 
-	updatedUser, err := testQueries.UpdateUser(context.Background(), UpdateUserParams{
-		Username: oldUser.Username,
-		HashedPassword: pgtype.Text{
-			String: newHashedPassword,
-			Valid:  true,
-		},
+	updatedUser, err := repositories.User().UpdateUser(context.Background(), application.UpdateUserParams{
+		Username:       oldUser.Username,
+		HashedPassword: &newHashedPassword,
 	})
 
 	require.NoError(t, err)
@@ -125,20 +162,11 @@ func TestUpdateUserAllFields(t *testing.T) {
 	newHashedPassword, err := util.HashPassword(util.RandomString(6))
 	require.NoError(t, err)
 
-	updatedUser, err := testQueries.UpdateUser(context.Background(), UpdateUserParams{
-		Username: oldUser.Username,
-		FullName: pgtype.Text{
-			String: newFullName,
-			Valid:  true,
-		},
-		Email: pgtype.Text{
-			String: newEmail,
-			Valid:  true,
-		},
-		HashedPassword: pgtype.Text{
-			String: newHashedPassword,
-			Valid:  true,
-		},
+	updatedUser, err := repositories.User().UpdateUser(context.Background(), application.UpdateUserParams{
+		Username:       oldUser.Username,
+		FullName:       &newFullName,
+		Email:          &newEmail,
+		HashedPassword: &newHashedPassword,
 	})
 	require.NoError(t, err)
 
