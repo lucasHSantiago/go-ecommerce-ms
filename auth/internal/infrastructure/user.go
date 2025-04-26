@@ -112,8 +112,7 @@ func (u *UserRepository) UpdateUser(ctx context.Context, arg application.UpdateU
 
 	user, err := pgx.CollectOneRow(rows, pgx.RowToAddrOfStructByName[domain.User])
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update user")
-		return nil, err
+		return nil, getUserError(err, "failed to update user")
 	}
 
 	return user, err

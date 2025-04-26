@@ -11,8 +11,9 @@ import (
 )
 
 type testRepositories struct {
-	connPool *pgxpool.Pool
-	user     *UserRepository
+	connPool    *pgxpool.Pool
+	user        *UserRepository
+	verifyEmail *VerifyEmailRepository
 }
 
 func (r *testRepositories) User() *UserRepository {
@@ -21,6 +22,14 @@ func (r *testRepositories) User() *UserRepository {
 	}
 
 	return r.user
+}
+
+func (r *testRepositories) VerifyEmail() *VerifyEmailRepository {
+	if r.verifyEmail == nil {
+		r.verifyEmail = NewVerifyEmailRepository(r.connPool)
+	}
+
+	return r.verifyEmail
 }
 
 var repositories testRepositories
