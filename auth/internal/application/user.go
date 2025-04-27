@@ -2,8 +2,7 @@ package application
 
 import (
 	"context"
-	"net/mail"
-	"regexp"
+	"fmt"
 	"time"
 
 	"github.com/hibiken/asynq"
@@ -11,7 +10,6 @@ import (
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/handler/service"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/validator"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/worker"
 )
 
@@ -25,14 +23,14 @@ func NewUserApplication(userRepository port.UserRepository, taskDistributor work
 }
 
 func (u *UserApplication) CreateUser(ctx context.Context, arg service.CreateUserParams) (*domain.User, error) {
-	errValidation := ValidateCreateUserParams(arg)
+	errValidation := validateCreateUserParams(arg)
 	if errValidation != nil {
-		return nil, errValidation
+		return nil, fmt.Errorf("validation error: %w", errValidation)
 	}
 
 	hashedPassword, err := util.HashPassword(arg.Password)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	argTx := port.CreateUserTxParams{
@@ -59,39 +57,35 @@ func (u *UserApplication) CreateUser(ctx context.Context, arg service.CreateUser
 
 	res, err := u.userRepository.CreateUserTx(ctx, argTx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
 	return &res.User, nil
 }
 
-var (
-	isValidUsername = regexp.MustCompile(`^[a-z0-9_]+$`).MatchString
-	isValidFullName = regexp.MustCompile(`^[A-Za-z ]+$`).MatchString
-)
-
-func ValidateCreateUserParams(arg service.CreateUserParams) *validator.ValidationErrors {
-	var errs validator.ValidationErrors
-
-	if len(arg.Username) < 3 || len(arg.Username) > 100 || !isValidUsername(arg.Username) {
-		errs = append(errs, validator.NewFielValidation("username", "username must have 3-100 characters and contain only letters, numbers, or underscores"))
+func (u *UserApplication) UpdateUser(ctx context.Context, arg service.UpdateUserParams) (*domain.User, error) {
+	errValidation := validateUpdateUserParams(arg)
+	if errValidation != nil {
+		return nil, fmt.Errorf("validation error: %w", errValidation)
 	}
 
-	if len(arg.Password) < 6 || len(arg.Password) > 100 {
-		errs = append(errs, validator.NewFielValidation("password", "password must have 6-100 characters"))
+	updateUserParams := port.UpdateUserParams{}
+	if arg.Password != nil {
+		hashedPassword, err := util.HashPassword(*arg.Password)
+		if err != nil {
+			return nil, fmt.Errorf("failed to hash password: %w", err)
+		}
+
+		updateUserParams.HashedPassword = &hashedPassword
+
+		now := time.Now()
+		updateUserParams.PasswordChangedAt = &now
 	}
 
-	if len(arg.FullName) < 3 || len(arg.FullName) > 100 || !isValidFullName(arg.FullName) {
-		errs = append(errs, validator.NewFielValidation("full name", "full name must have 3-100 characters and contain only letters and spaces"))
+	user, err := u.userRepository.UpdateUser(ctx, updateUserParams)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update user: %w", err)
 	}
 
-	if _, err := mail.ParseAddress(arg.Email); err != nil {
-		errs = append(errs, validator.NewFielValidation("email", "email must be a valid email address"))
-	}
-
-	if len(errs) > 0 {
-		return &errs
-	}
-
-	return nil
+	return user, nil
 }
