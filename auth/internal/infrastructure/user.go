@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
@@ -13,10 +12,10 @@ import (
 )
 
 type UserRepository struct {
-	connPool *pgxpool.Pool
+	connPool DBTX
 }
 
-func NewUserRepository(connPool *pgxpool.Pool) *UserRepository {
+func NewUserRepository(connPool DBTX) *UserRepository {
 	return &UserRepository{connPool}
 }
 
@@ -116,4 +115,22 @@ func (u *UserRepository) UpdateUser(ctx context.Context, arg application.UpdateU
 	}
 
 	return user, err
+}
+
+func (u *UserRepository) CreateUserTx(ctx context.Context, arg application.CreateUserTxParams) (application.CreateUserTxResult, error) {
+	var result application.CreateUserTxResult
+
+	err := execTx(ctx, u.connPool, func(tx pgx.Tx) error {
+		userRepository := NewUserRepository(tx)
+		user, err := userRepository.CreateUser(ctx, arg.CreateUserParams)
+		if err != nil {
+			return err
+		}
+
+		result.User = *user
+
+		return arg.AfterCreate(result.User)
+	})
+
+	return result, err
 }

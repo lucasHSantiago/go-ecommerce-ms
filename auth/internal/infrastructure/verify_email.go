@@ -5,17 +5,16 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
 	"github.com/rs/zerolog/log"
 )
 
 type VerifyEmailRepository struct {
-	connPool *pgxpool.Pool
+	connPool DBTX
 }
 
-func NewVerifyEmailRepository(connPool *pgxpool.Pool) *VerifyEmailRepository {
+func NewVerifyEmailRepository(connPool DBTX) *VerifyEmailRepository {
 	return &VerifyEmailRepository{connPool}
 }
 

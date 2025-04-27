@@ -23,8 +23,18 @@ type UpdateUserParams struct {
 	Username          string
 }
 
+type CreateUserTxParams struct {
+	CreateUserParams
+	AfterCreate func(user domain.User) error
+}
+
+type CreateUserTxResult struct {
+	User domain.User
+}
+
 type UserRepository interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (*domain.User, error)
+	CreateUserTx(ctx context.Context, arg CreateUserTxParams) (CreateUserTxResult, error)
 	GetUser(ctx context.Context, username string) (*domain.User, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (*domain.User, error)
 }

@@ -7,16 +7,17 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 )
 
 type testRepositories struct {
 	connPool    *pgxpool.Pool
-	user        *UserRepository
-	verifyEmail *VerifyEmailRepository
+	user        application.UserRepository
+	verifyEmail application.VerifyEmailRepository
 }
 
-func (r *testRepositories) User() *UserRepository {
+func (r *testRepositories) User() application.UserRepository {
 	if r.user == nil {
 		r.user = NewUserRepository(r.connPool)
 	}
@@ -24,7 +25,7 @@ func (r *testRepositories) User() *UserRepository {
 	return r.user
 }
 
-func (r *testRepositories) VerifyEmail() *VerifyEmailRepository {
+func (r *testRepositories) VerifyEmail() application.VerifyEmailRepository {
 	if r.verifyEmail == nil {
 		r.verifyEmail = NewVerifyEmailRepository(r.connPool)
 	}

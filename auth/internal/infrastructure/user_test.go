@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -80,6 +81,52 @@ func TestCreteUserSameEmail(t *testing.T) {
 	require.Error(t, err)
 	require.ErrorIs(t, err, domain.ErrEmailAlreadyExist)
 	require.Nil(t, createdUser)
+}
+
+func TestCreateUserTx(t *testing.T) {
+	hashedPassword, err := util.HashPassword(util.RandomString(6))
+	require.NoError(t, err)
+
+	arg := application.CreateUserTxParams{
+		CreateUserParams: application.CreateUserParams{
+			Username:       util.RandomUsername(),
+			HashedPassword: hashedPassword,
+			FullName:       util.RandomUsername(),
+			Email:          util.RandomEmail(),
+		},
+		AfterCreate: func(user domain.User) error { return nil },
+	}
+
+	result, err := repositories.User().CreateUserTx(context.Background(), arg)
+	require.NoError(t, err)
+	require.NotEmpty(t, result.User)
+
+	user := result.User
+	require.Equal(t, arg.Username, user.Username)
+	require.Equal(t, arg.HashedPassword, user.HashedPassword)
+	require.Equal(t, arg.FullName, user.FullName)
+	require.Equal(t, arg.Email, user.Email)
+
+	require.True(t, user.PasswordChangedAt.IsZero())
+	require.NotZero(t, user.CreatedAt)
+}
+
+func TestCreatUserTxRollBack(t *testing.T) {
+	hashedPassword, err := util.HashPassword(util.RandomString(6))
+	require.NoError(t, err)
+
+	arg := application.CreateUserTxParams{
+		CreateUserParams: application.CreateUserParams{
+			Username:       util.RandomUsername(),
+			HashedPassword: hashedPassword,
+			FullName:       util.RandomUsername(),
+			Email:          util.RandomEmail(),
+		},
+		AfterCreate: func(user domain.User) error { return fmt.Errorf("error inside transaction") },
+	}
+
+	_, err = repositories.User().CreateUserTx(context.Background(), arg)
+	require.Error(t, err)
 }
 
 func TestGetUser(t *testing.T) {
