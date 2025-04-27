@@ -28,7 +28,8 @@ sqlc:
 
 .PHONY: mock
 mock:
-	mockgen -package mockdb -destination internal/db/mock/store.go github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/db/sqlc Store
+	mockgen -source internal/application/port/user.go -destination internal/application/port/mock/user_repository.go -package mockdb
+	mockgen -source internal/worker/distributor.go -destination internal/worker/mock/distributor.go -package mockwk
 
 #@TODO: need to change this
 .PHONY: proto

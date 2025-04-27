@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/port"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
 	"github.com/rs/zerolog/log"
 )
@@ -43,7 +43,7 @@ INSERT INTO "verify_emails" (
 ) RETURNING id, username, email, secret_code, is_used, created_at, expired_at
 `
 
-func (v *VerifyEmailRepository) CreateVerifyEmail(ctx context.Context, arg application.CreateVerifyEmailParams) (*domain.VerifyEmail, error) {
+func (v *VerifyEmailRepository) CreateVerifyEmail(ctx context.Context, arg port.CreateVerifyEmailParams) (*domain.VerifyEmail, error) {
 	args := []any{
 		arg.Username,
 		arg.Email,
@@ -70,7 +70,7 @@ AND expired_at > now()
 RETURNING id, username, email, secret_code, is_used, created_at, expired_at
 `
 
-func (v *VerifyEmailRepository) UpdateVerifyEmail(ctx context.Context, arg application.UpdateVerifyEmailParams) (*domain.VerifyEmail, error) {
+func (v *VerifyEmailRepository) UpdateVerifyEmail(ctx context.Context, arg port.UpdateVerifyEmailParams) (*domain.VerifyEmail, error) {
 	args := []any{
 		arg.ID,
 		arg.SecretCode,

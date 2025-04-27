@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/port"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ func createRandomUser(t *testing.T) domain.User {
 	hashedPassword, err := util.HashPassword(util.RandomString(6))
 	require.NoError(t, err)
 
-	arg := application.CreateUserParams{
+	arg := port.CreateUserParams{
 		Username:       util.RandomUsername(),
 		HashedPassword: hashedPassword,
 		FullName:       util.RandomUsername(),
@@ -51,7 +51,7 @@ func TestCreteUserSameUsername(t *testing.T) {
 	hashedPassword, err := util.HashPassword(util.RandomString(6))
 	require.NoError(t, err)
 
-	arg := application.CreateUserParams{
+	arg := port.CreateUserParams{
 		Username:       user.Username,
 		HashedPassword: hashedPassword,
 		FullName:       util.RandomUsername(),
@@ -70,7 +70,7 @@ func TestCreteUserSameEmail(t *testing.T) {
 	hashedPassword, err := util.HashPassword(util.RandomString(6))
 	require.NoError(t, err)
 
-	arg := application.CreateUserParams{
+	arg := port.CreateUserParams{
 		Username:       util.RandomUsername(),
 		HashedPassword: hashedPassword,
 		FullName:       util.RandomUsername(),
@@ -87,8 +87,8 @@ func TestCreateUserTx(t *testing.T) {
 	hashedPassword, err := util.HashPassword(util.RandomString(6))
 	require.NoError(t, err)
 
-	arg := application.CreateUserTxParams{
-		CreateUserParams: application.CreateUserParams{
+	arg := port.CreateUserTxParams{
+		CreateUserParams: port.CreateUserParams{
 			Username:       util.RandomUsername(),
 			HashedPassword: hashedPassword,
 			FullName:       util.RandomUsername(),
@@ -115,8 +115,8 @@ func TestCreatUserTxRollBack(t *testing.T) {
 	hashedPassword, err := util.HashPassword(util.RandomString(6))
 	require.NoError(t, err)
 
-	arg := application.CreateUserTxParams{
-		CreateUserParams: application.CreateUserParams{
+	arg := port.CreateUserTxParams{
+		CreateUserParams: port.CreateUserParams{
 			Username:       util.RandomUsername(),
 			HashedPassword: hashedPassword,
 			FullName:       util.RandomUsername(),
@@ -156,7 +156,7 @@ func TestUpdateUserOnlyFullname(t *testing.T) {
 	oldUser := createRandomUser(t)
 	newFullName := util.RandomUsername()
 
-	updatedUser, err := repositories.User().UpdateUser(context.Background(), application.UpdateUserParams{
+	updatedUser, err := repositories.User().UpdateUser(context.Background(), port.UpdateUserParams{
 		Username: oldUser.Username,
 		FullName: &newFullName,
 	})
@@ -172,7 +172,7 @@ func TestUpdateUserOnlyEmail(t *testing.T) {
 	oldUser := createRandomUser(t)
 	newEmail := util.RandomEmail()
 
-	updatedUser, err := repositories.User().UpdateUser(context.Background(), application.UpdateUserParams{
+	updatedUser, err := repositories.User().UpdateUser(context.Background(), port.UpdateUserParams{
 		Username: oldUser.Username,
 		Email:    &newEmail,
 	})
@@ -189,7 +189,7 @@ func TestUpdateUserOnlyPassword(t *testing.T) {
 	newHashedPassword, err := util.HashPassword(util.RandomString(6))
 	require.NoError(t, err)
 
-	updatedUser, err := repositories.User().UpdateUser(context.Background(), application.UpdateUserParams{
+	updatedUser, err := repositories.User().UpdateUser(context.Background(), port.UpdateUserParams{
 		Username:       oldUser.Username,
 		HashedPassword: &newHashedPassword,
 	})
@@ -209,7 +209,7 @@ func TestUpdateUserAllFields(t *testing.T) {
 	newHashedPassword, err := util.HashPassword(util.RandomString(6))
 	require.NoError(t, err)
 
-	updatedUser, err := repositories.User().UpdateUser(context.Background(), application.UpdateUserParams{
+	updatedUser, err := repositories.User().UpdateUser(context.Background(), port.UpdateUserParams{
 		Username:       oldUser.Username,
 		FullName:       &newFullName,
 		Email:          &newEmail,
