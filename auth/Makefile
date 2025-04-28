@@ -12,15 +12,15 @@ dropdb:
 
 .PHONY: migrateup
 migrateup:
-	migrate -path internal/db/migrations -database "postgresql://postgres:admin@localhost:5432/auth-service?sslmode=disable" -verbose up $(or $(n))
+	migrate -path internal/infra/migrations -database "postgresql://postgres:admin@localhost:5432/auth-service?sslmode=disable" -verbose up $(or $(n))
 
 .PHONY: migratedown
 migratedown:
-	migrate -path internal/db/migrations -database "postgresql://postgres:admin@localhost:5432/auth-service?sslmode=disable" -verbose down $(or $(n))
+	migrate -path internal/infra/migrations -database "postgresql://postgres:admin@localhost:5432/auth-service?sslmode=disable" -verbose down $(or $(n))
 
 .PHONY: new_migration
 new_migration:
-	migrate create -ext sql -dir internal/db/migrations -seq $(name)
+	migrate create -ext sql -dir internal/infra/migrations -seq $(name)
 
 .PHONY: sqlc
 sqlc:

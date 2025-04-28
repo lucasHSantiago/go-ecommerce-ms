@@ -15,6 +15,7 @@ type testRepositories struct {
 	connPool    *pgxpool.Pool
 	user        port.UserRepository
 	verifyEmail port.VerifyEmailRepository
+	session     port.SessionRepository
 }
 
 func (r *testRepositories) User() port.UserRepository {
@@ -31,6 +32,14 @@ func (r *testRepositories) VerifyEmail() port.VerifyEmailRepository {
 	}
 
 	return r.verifyEmail
+}
+
+func (r *testRepositories) Session() port.SessionRepository {
+	if r.session == nil {
+		r.session = NewSessionRepository(r.connPool)
+	}
+
+	return r.session
 }
 
 var repositories testRepositories
