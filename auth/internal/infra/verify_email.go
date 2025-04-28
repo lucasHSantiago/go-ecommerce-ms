@@ -14,7 +14,7 @@ type VerifyEmailRepository struct {
 	connPool DBTX
 }
 
-func NewVerifyEmailRepository(connPool DBTX) *VerifyEmailRepository {
+func NewVerifyEmailRepository(connPool DBTX) port.VerifyEmailRepository {
 	return &VerifyEmailRepository{connPool}
 }
 

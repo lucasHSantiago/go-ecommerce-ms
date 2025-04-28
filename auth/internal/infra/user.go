@@ -15,7 +15,7 @@ type UserRepository struct {
 	connPool DBTX
 }
 
-func NewUserRepository(connPool DBTX) *UserRepository {
+func NewUserRepository(connPool DBTX) port.UserRepository {
 	return &UserRepository{connPool}
 }
 
