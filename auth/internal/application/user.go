@@ -8,24 +8,33 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/port"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/handler/service"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/gapi/service"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/token"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/worker"
 )
 
 type UserApplication struct {
-	userRepository  port.UserRepository
-	taskDistributor worker.TaskDistributor
+	userRepository     port.UserRepository
+	sessionRespository port.SessionRepository
+	taskDistributor    worker.TaskDistributor
+	tokenMaker         token.Maker
+	config             *util.Config
 }
 
-func NewUserApplication(userRepository port.UserRepository, taskDistributor worker.TaskDistributor) *UserApplication {
-	return &UserApplication{userRepository, taskDistributor}
+func NewUserApplication(userRepository port.UserRepository, sessionRepository port.SessionRepository, taskDistributor worker.TaskDistributor, tokenMaker token.Maker, config *util.Config) service.UserApplication {
+	return &UserApplication{
+		userRepository:     userRepository,
+		sessionRespository: sessionRepository,
+		taskDistributor:    taskDistributor,
+		tokenMaker:         tokenMaker,
+		config:             config,
+	}
 }
 
-func (u *UserApplication) CreateUser(ctx context.Context, arg service.CreateUserParams) (*domain.User, error) {
-	errValidation := validateCreateUserParams(arg)
-	if errValidation != nil {
-		return nil, fmt.Errorf("validation error: %w", errValidation)
+func (u *UserApplication) Create(ctx context.Context, arg service.CreateUserParams) (*domain.User, error) {
+	if errValidation := validateCreateUserParams(arg); errValidation != nil {
+		return nil, errValidation
 	}
 
 	hashedPassword, err := util.HashPassword(arg.Password)
@@ -63,10 +72,10 @@ func (u *UserApplication) CreateUser(ctx context.Context, arg service.CreateUser
 	return &res.User, nil
 }
 
-func (u *UserApplication) UpdateUser(ctx context.Context, arg service.UpdateUserParams) (*domain.User, error) {
-	errValidation := validateUpdateUserParams(arg)
-	if errValidation != nil {
-		return nil, fmt.Errorf("validation error: %w", errValidation)
+// @TODO: testar
+func (u *UserApplication) Update(ctx context.Context, arg service.UpdateUserParams) (*domain.User, error) {
+	if errValidation := validateUpdateUserParams(arg); errValidation != nil {
+		return nil, errValidation
 	}
 
 	updateUserParams := port.UpdateUserParams{}
@@ -88,4 +97,56 @@ func (u *UserApplication) UpdateUser(ctx context.Context, arg service.UpdateUser
 	}
 
 	return user, nil
+}
+
+// @TODO: testar
+func (u *UserApplication) Login(ctx context.Context, arg service.LoginUserParams) (*service.LoginUserResult, error) {
+	if errValidation := validateLoginUserParams(arg); errValidation != nil {
+		return nil, fmt.Errorf("validation error: %w", errValidation)
+	}
+
+	user, err := u.userRepository.GetUser(ctx, arg.Username)
+	if err != nil {
+		return nil, fmt.Errorf("username invalid: %w", err)
+	}
+
+	err = util.CheckPassword(arg.Password, user.HashedPassword)
+	if err != nil {
+		return nil, fmt.Errorf("invalid usarname or password")
+	}
+
+	accessToken, accessPayload, err := u.tokenMaker.CreateToken(user.Username, user.Role, u.config.AccessTokenDuration)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create token: %w", err)
+	}
+
+	refreshToken, refreshPayload, err := u.tokenMaker.CreateToken(user.Username, user.Role, u.config.RefreshTokenDuration)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create refresh token: %w", err)
+	}
+
+	metadata := util.ExtractMetadata(ctx)
+	session, err := u.sessionRespository.CreateSession(ctx, port.CreateSessionParams{
+		ID:           refreshPayload.ID,
+		Username:     user.Username,
+		RefreshToken: refreshToken,
+		UserAgent:    metadata.UserAgent,
+		ClientIp:     metadata.ClientIP,
+		IsBlocked:    false,
+		ExpiresAt:    refreshPayload.ExpiredAt,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create session: %w", err)
+	}
+
+	response := &service.LoginUserResult{
+		User:                  user,
+		SessionId:             session.ID.String(),
+		AccessToken:           accessToken,
+		RefreshToken:          refreshToken,
+		AccessTokenExpiresAt:  &accessPayload.ExpiredAt,
+		RefreshTokenExpiresAt: &refreshPayload.ExpiredAt,
+	}
+
+	return response, nil
 }

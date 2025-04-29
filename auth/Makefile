@@ -31,6 +31,10 @@ mock:
 	mockgen -source internal/application/port/user.go -destination internal/application/port/mock/user_repository.go -package mockdb
 	mockgen -source internal/worker/distributor.go -destination internal/worker/mock/distributor.go -package mockwk
 
+.PHONY: redis
+redis:
+	docker run --name redis -p 6379:6379 -d redis:7.4.2-alpine
+
 #@TODO: need to change this
 .PHONY: proto
 proto:

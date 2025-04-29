@@ -2,7 +2,6 @@ package infra
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/port"
@@ -21,7 +20,6 @@ func NewVerifyEmailRepository(connPool DBTX) port.VerifyEmailRepository {
 func getVerifyEmailError(err error, msg string) error {
 	if pgError := GetPgError(err); pgError != nil {
 		if pgError.Code == ForeignKeyViolation {
-			fmt.Println("contraint:", pgError.ConstraintName)
 			switch pgError.ConstraintName {
 			case "verify_emails_username_fkey":
 				return domain.ErrUserNotFound

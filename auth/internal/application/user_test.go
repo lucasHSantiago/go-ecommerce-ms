@@ -11,7 +11,7 @@ import (
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/port"
 	mockdb "github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/port/mock"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/handler/service"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/gapi/service"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/validator"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/worker"
@@ -295,8 +295,8 @@ func TestCreateUserAPI(t *testing.T) {
 
 			tc.buildStubs(userRespository, taskDistrubutor)
 
-			userApplication := NewUserApplication(userRespository, taskDistrubutor)
-			res, err := userApplication.CreateUser(context.Background(), tc.arg)
+			userApplication := NewUserApplication(userRespository, nil, taskDistrubutor, nil, nil)
+			res, err := userApplication.Create(context.Background(), tc.arg)
 			tc.checkResponse(t, res, err)
 		})
 	}

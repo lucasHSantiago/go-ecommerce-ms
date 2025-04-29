@@ -5,7 +5,7 @@ import (
 	"net/mail"
 	"regexp"
 
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/handler/service"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/gapi/service"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/validator"
 )
 
@@ -25,7 +25,7 @@ func validateCreateUserParams(arg service.CreateUserParams) *validator.Validatio
 		errs = append(errs, validator.NewFieldValidation("password", err))
 	}
 
-	if err := validateUsername(arg.Username); err != nil {
+	if err := validateFullName(arg.FullName); err != nil {
 		errs = append(errs, validator.NewFieldValidation("full_name", err))
 	}
 
@@ -63,6 +63,24 @@ func validateUpdateUserParams(arg service.UpdateUserParams) *validator.Validatio
 		if err := validateEmail(*arg.Email); err != nil {
 			errs = append(errs, validator.NewFieldValidation("email", err))
 		}
+	}
+
+	if len(errs) > 0 {
+		return &errs
+	}
+
+	return nil
+}
+
+func validateLoginUserParams(arg service.LoginUserParams) *validator.ValidationErrors {
+	var errs validator.ValidationErrors
+
+	if err := validateUsername(arg.Username); err != nil {
+		errs = append(errs, validator.NewFieldValidation("username", err))
+	}
+
+	if err := validatePassword(arg.Password); err != nil {
+		errs = append(errs, validator.NewFieldValidation("password", err))
 	}
 
 	if len(errs) > 0 {

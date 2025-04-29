@@ -14,11 +14,11 @@ var (
 )
 
 type Payload struct {
-	ID        uuid.UUID `json:"id"`
-	Username  string    `json:"username"`
-	Role      string    `json:"role"`
-	IssuedAt  time.Time `json:"issued_at"`
-	ExpiredAt time.Time `json:"expired_at"`
+	ID        uuid.UUID
+	Username  string
+	Role      string
+	IssuedAt  time.Time
+	ExpiredAt time.Time
 }
 
 func NewPayload(username string, role string, durantion time.Duration) (*Payload, error) {
