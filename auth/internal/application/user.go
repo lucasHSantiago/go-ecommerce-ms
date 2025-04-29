@@ -72,13 +72,17 @@ func (u *UserApplication) Create(ctx context.Context, arg service.CreateUserPara
 	return &res.User, nil
 }
 
-// @TODO: testar
 func (u *UserApplication) Update(ctx context.Context, arg service.UpdateUserParams) (*domain.User, error) {
 	if errValidation := validateUpdateUserParams(arg); errValidation != nil {
 		return nil, errValidation
 	}
 
-	updateUserParams := port.UpdateUserParams{}
+	updateUserParams := port.UpdateUserParams{
+		FullName: arg.FullName,
+		Username: arg.Username,
+		Email:    arg.Email,
+	}
+
 	if arg.Password != nil {
 		hashedPassword, err := util.HashPassword(*arg.Password)
 		if err != nil {
