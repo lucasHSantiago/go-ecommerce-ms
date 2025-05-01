@@ -17,7 +17,6 @@ import (
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/token"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/validator"
 	"github.com/stretchr/testify/require"
 )
 
@@ -158,7 +157,7 @@ func TestCreateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*validator.ValidationErrors)
+				_, ok := err.(*domain.ValidationErrors)
 				require.True(t, ok)
 			},
 		},
@@ -181,7 +180,7 @@ func TestCreateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*validator.ValidationErrors)
+				_, ok := err.(*domain.ValidationErrors)
 				require.True(t, ok)
 			},
 		},
@@ -204,7 +203,7 @@ func TestCreateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*validator.ValidationErrors)
+				_, ok := err.(*domain.ValidationErrors)
 				require.True(t, ok)
 			},
 		},
@@ -227,7 +226,7 @@ func TestCreateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*validator.ValidationErrors)
+				_, ok := err.(*domain.ValidationErrors)
 				require.True(t, ok)
 			},
 		},
@@ -250,7 +249,7 @@ func TestCreateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*validator.ValidationErrors)
+				_, ok := err.(*domain.ValidationErrors)
 				require.True(t, ok)
 			},
 		},
@@ -273,7 +272,7 @@ func TestCreateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*validator.ValidationErrors)
+				_, ok := err.(*domain.ValidationErrors)
 				require.True(t, ok)
 			},
 		},
@@ -296,7 +295,7 @@ func TestCreateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*validator.ValidationErrors)
+				_, ok := err.(*domain.ValidationErrors)
 				require.True(t, ok)
 			},
 		},
@@ -335,7 +334,7 @@ func TestCreateUserUseCase(t *testing.T) {
 
 			tc.buildMocks(userRespository, taskDistrubutor)
 
-			userApplication := NewUserApplication(userRespository, nil, nil, nil, nil)
+			userApplication := NewUserApplication(userRespository, nil, taskDistrubutor, nil, nil)
 			res, err := userApplication.Create(context.Background(), tc.arg)
 			tc.checkResponse(t, res, err)
 		})
@@ -409,7 +408,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*validator.ValidationErrors)
+				_, ok := err.(*domain.ValidationErrors)
 				require.True(t, ok)
 			},
 		},
@@ -428,7 +427,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*validator.ValidationErrors)
+				_, ok := err.(*domain.ValidationErrors)
 				require.True(t, ok)
 			},
 		},
@@ -447,7 +446,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*validator.ValidationErrors)
+				_, ok := err.(*domain.ValidationErrors)
 				require.True(t, ok)
 			},
 		},
@@ -466,7 +465,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*validator.ValidationErrors)
+				_, ok := err.(*domain.ValidationErrors)
 				require.True(t, ok)
 			},
 		},
@@ -485,7 +484,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*validator.ValidationErrors)
+				_, ok := err.(*domain.ValidationErrors)
 				require.True(t, ok)
 			},
 		},
@@ -504,7 +503,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*validator.ValidationErrors)
+				_, ok := err.(*domain.ValidationErrors)
 				require.True(t, ok)
 			},
 		},
@@ -523,7 +522,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*validator.ValidationErrors)
+				_, ok := err.(*domain.ValidationErrors)
 				require.True(t, ok)
 			},
 		},
@@ -636,7 +635,7 @@ func TestLoginUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, result *params.LoginUserAppResult, err error) {
 				require.Error(t, err)
-				_, ok := err.(*validator.ValidationErrors)
+				_, ok := err.(*domain.ValidationErrors)
 				require.True(t, ok)
 			},
 		},
@@ -657,7 +656,7 @@ func TestLoginUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, result *params.LoginUserAppResult, err error) {
 				require.Error(t, err)
-				_, ok := err.(*validator.ValidationErrors)
+				_, ok := err.(*domain.ValidationErrors)
 				require.True(t, ok)
 			},
 		},

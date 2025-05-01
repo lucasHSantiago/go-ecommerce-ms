@@ -5,8 +5,8 @@ import (
 	"net/mail"
 	"regexp"
 
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/validator"
 )
 
 var (
@@ -14,23 +14,23 @@ var (
 	isValidFullName = regexp.MustCompile(`^[A-Za-z ]+$`).MatchString
 )
 
-func validateCreateUserParams(arg params.CreateUserApp) *validator.ValidationErrors {
-	var errs validator.ValidationErrors
+func validateCreateUserParams(arg params.CreateUserApp) *domain.ValidationErrors {
+	var errs domain.ValidationErrors
 
 	if err := validateUsername(arg.Username); err != nil {
-		errs = append(errs, validator.NewFieldValidation("username", err))
+		errs = append(errs, domain.NewFieldValidation("username", err))
 	}
 
 	if err := validatePassword(arg.Password); err != nil {
-		errs = append(errs, validator.NewFieldValidation("password", err))
+		errs = append(errs, domain.NewFieldValidation("password", err))
 	}
 
 	if err := validateFullName(arg.FullName); err != nil {
-		errs = append(errs, validator.NewFieldValidation("full_name", err))
+		errs = append(errs, domain.NewFieldValidation("full_name", err))
 	}
 
 	if err := validateEmail(arg.Email); err != nil {
-		errs = append(errs, validator.NewFieldValidation("email", err))
+		errs = append(errs, domain.NewFieldValidation("email", err))
 	}
 
 	if len(errs) > 0 {
@@ -40,28 +40,28 @@ func validateCreateUserParams(arg params.CreateUserApp) *validator.ValidationErr
 	return nil
 }
 
-func validateUpdateUserParams(arg params.UpdateUserApp) *validator.ValidationErrors {
-	var errs validator.ValidationErrors
+func validateUpdateUserParams(arg params.UpdateUserApp) *domain.ValidationErrors {
+	var errs domain.ValidationErrors
 
 	if err := validateUsername(arg.Username); err != nil {
-		errs = append(errs, validator.NewFieldValidation("username", err))
+		errs = append(errs, domain.NewFieldValidation("username", err))
 	}
 
 	if arg.FullName != nil {
 		if err := validateFullName(*arg.FullName); err != nil {
-			errs = append(errs, validator.NewFieldValidation("full_name", err))
+			errs = append(errs, domain.NewFieldValidation("full_name", err))
 		}
 	}
 
 	if arg.Password != nil {
 		if err := validatePassword(*arg.Password); err != nil {
-			errs = append(errs, validator.NewFieldValidation("password", err))
+			errs = append(errs, domain.NewFieldValidation("password", err))
 		}
 	}
 
 	if arg.Email != nil {
 		if err := validateEmail(*arg.Email); err != nil {
-			errs = append(errs, validator.NewFieldValidation("email", err))
+			errs = append(errs, domain.NewFieldValidation("email", err))
 		}
 	}
 
@@ -72,15 +72,15 @@ func validateUpdateUserParams(arg params.UpdateUserApp) *validator.ValidationErr
 	return nil
 }
 
-func validateLoginUserParams(arg params.LoginUserApp) *validator.ValidationErrors {
-	var errs validator.ValidationErrors
+func validateLoginUserParams(arg params.LoginUserApp) *domain.ValidationErrors {
+	var errs domain.ValidationErrors
 
 	if err := validateUsername(arg.Username); err != nil {
-		errs = append(errs, validator.NewFieldValidation("username", err))
+		errs = append(errs, domain.NewFieldValidation("username", err))
 	}
 
 	if err := validatePassword(arg.Password); err != nil {
-		errs = append(errs, validator.NewFieldValidation("password", err))
+		errs = append(errs, domain.NewFieldValidation("password", err))
 	}
 
 	if len(errs) > 0 {
@@ -91,7 +91,7 @@ func validateLoginUserParams(arg params.LoginUserApp) *validator.ValidationError
 }
 
 func validateUsername(value string) error {
-	if err := validator.ValidateString(value, 3, 100); err != nil {
+	if err := domain.ValidateString(value, 3, 100); err != nil {
 		return err
 	}
 
@@ -103,7 +103,7 @@ func validateUsername(value string) error {
 }
 
 func validateFullName(value string) error {
-	if err := validator.ValidateString(value, 3, 100); err != nil {
+	if err := domain.ValidateString(value, 3, 100); err != nil {
 		return err
 	}
 
@@ -115,11 +115,11 @@ func validateFullName(value string) error {
 }
 
 func validatePassword(value string) error {
-	return validator.ValidateString(value, 6, 100)
+	return domain.ValidateString(value, 6, 100)
 }
 
 func validateEmail(value string) error {
-	if err := validator.ValidateString(value, 3, 200); err != nil {
+	if err := domain.ValidateString(value, 3, 200); err != nil {
 		return err
 	}
 
