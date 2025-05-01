@@ -47,3 +47,8 @@ proto:
 	--openapiv2_out=docs/swagger --openapiv2_opt=allow_merge=true,merge_file_name=go-ecommerce-ms \
 	proto/*.proto
 	statik -src=./docs/swagger -dest=./docs
+
+.PHONY: test
+test:
+	go test -v -cover -short ./...
+
