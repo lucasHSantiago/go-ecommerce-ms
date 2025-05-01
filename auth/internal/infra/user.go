@@ -19,7 +19,7 @@ func NewUserRepository(connPool DBTX) port.UserRepository {
 	return &UserRepository{connPool}
 }
 
-func getUserError(err error, msg string) error {
+func getUserError(err error, defaultReturn error, msg string) error {
 	if errors.Is(err, ErrRecordNotFound) {
 		return domain.ErrUserNotFound
 	}
@@ -36,7 +36,7 @@ func getUserError(err error, msg string) error {
 	}
 
 	log.Error().Err(err).Msg(msg)
-	return err
+	return defaultReturn
 }
 
 const createUser = `
@@ -62,7 +62,7 @@ func (u *UserRepository) CreateUser(ctx context.Context, arg port.CreateUserPara
 
 	user, err := pgx.CollectOneRow(rows, pgx.RowToAddrOfStructByName[domain.User])
 	if err != nil {
-		return nil, getUserError(err, "faield to create user")
+		return nil, getUserError(err, domain.ErrCreateUser, "faield to create user")
 	}
 
 	return user, err
@@ -78,7 +78,7 @@ func (u *UserRepository) GetUser(ctx context.Context, username string) (*domain.
 
 	user, err := pgx.CollectOneRow(rows, pgx.RowToAddrOfStructByName[domain.User])
 	if err != nil {
-		return nil, getUserError(err, "failed to get user by username")
+		return nil, getUserError(err, domain.ErrReadUser, "failed to get user by username")
 	}
 
 	return user, err
@@ -111,7 +111,7 @@ func (u *UserRepository) UpdateUser(ctx context.Context, arg port.UpdateUserPara
 
 	user, err := pgx.CollectOneRow(rows, pgx.RowToAddrOfStructByName[domain.User])
 	if err != nil {
-		return nil, getUserError(err, "failed to update user")
+		return nil, getUserError(err, domain.ErrUpdateUser, "failed to update user")
 	}
 
 	return user, err

@@ -6,12 +6,15 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/port"
 	mockdb "github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/port/mock"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/gapi/service"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/token"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/validator"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/worker"
@@ -54,7 +57,7 @@ func EqCreateUserTxParams(arg port.CreateUserTxParams, password string, user dom
 	return eqCreateUserParamsTxMatcher{arg, password, user}
 }
 
-func randomUser(t *testing.T) (domain.User, string) {
+func randomUser(t *testing.T) (*domain.User, string) {
 	t.Helper()
 
 	password := util.RandomString(6)
@@ -69,7 +72,24 @@ func randomUser(t *testing.T) (domain.User, string) {
 		Email:          util.RandomEmail(),
 	}
 
-	return user, password
+	return &user, password
+}
+
+func randomSession(t *testing.T, username string) *domain.Session {
+	t.Helper()
+
+	session := domain.Session{
+		ID:           uuid.New(),
+		Username:     username,
+		RefreshToken: "",
+		UserAgent:    "",
+		ClientIp:     "",
+		IsBlocked:    false,
+		ExpiresAt:    time.Now().Add(time.Minute),
+		CreatedAt:    time.Now().Add(-time.Minute),
+	}
+
+	return &session
 }
 
 func TestCreateUserUseCase(t *testing.T) {
@@ -78,7 +98,7 @@ func TestCreateUserUseCase(t *testing.T) {
 	testCases := []struct {
 		name          string
 		arg           service.CreateUserParams
-		buildStubs    func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor)
+		buildMocks    func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor)
 		checkResponse func(t *testing.T, res *domain.User, err error)
 	}{
 		{
@@ -89,7 +109,7 @@ func TestCreateUserUseCase(t *testing.T) {
 				Email:    user.Email,
 				Password: password,
 			},
-			buildStubs: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
+			buildMocks: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
 				arg := port.CreateUserTxParams{
 					CreateUserParams: port.CreateUserParams{
 						Username: user.Username,
@@ -99,9 +119,9 @@ func TestCreateUserUseCase(t *testing.T) {
 				}
 
 				userRepository.EXPECT().
-					CreateUserTx(gomock.Any(), EqCreateUserTxParams(arg, password, user)).
+					CreateUserTx(gomock.Any(), EqCreateUserTxParams(arg, password, *user)).
 					Times(1).
-					Return(port.CreateUserTxResult{User: user}, nil)
+					Return(port.CreateUserTxResult{User: *user}, nil)
 
 				taskPayload := &worker.PayloadSendVerifyEmail{
 					Username: user.Username,
@@ -128,7 +148,7 @@ func TestCreateUserUseCase(t *testing.T) {
 				Email:    user.Email,
 				Password: password,
 			},
-			buildStubs: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
+			buildMocks: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
 				userRepository.EXPECT().
 					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -151,7 +171,7 @@ func TestCreateUserUseCase(t *testing.T) {
 				Email:    user.Email,
 				Password: password,
 			},
-			buildStubs: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
+			buildMocks: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
 				userRepository.EXPECT().
 					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -174,7 +194,7 @@ func TestCreateUserUseCase(t *testing.T) {
 				Email:    user.Email,
 				Password: password,
 			},
-			buildStubs: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
+			buildMocks: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
 				userRepository.EXPECT().
 					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -197,7 +217,7 @@ func TestCreateUserUseCase(t *testing.T) {
 				Email:    user.Email,
 				Password: password,
 			},
-			buildStubs: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
+			buildMocks: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
 				userRepository.EXPECT().
 					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -220,7 +240,7 @@ func TestCreateUserUseCase(t *testing.T) {
 				Email:    "",
 				Password: password,
 			},
-			buildStubs: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
+			buildMocks: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
 				userRepository.EXPECT().
 					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -243,7 +263,7 @@ func TestCreateUserUseCase(t *testing.T) {
 				Email:    "invalid",
 				Password: password,
 			},
-			buildStubs: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
+			buildMocks: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
 				userRepository.EXPECT().
 					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -266,7 +286,7 @@ func TestCreateUserUseCase(t *testing.T) {
 				Email:    user.Email,
 				Password: "",
 			},
-			buildStubs: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
+			buildMocks: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
 				userRepository.EXPECT().
 					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -289,7 +309,7 @@ func TestCreateUserUseCase(t *testing.T) {
 				Email:    user.Email,
 				Password: password,
 			},
-			buildStubs: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
+			buildMocks: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
 				userRepository.EXPECT().
 					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(1).
@@ -309,14 +329,12 @@ func TestCreateUserUseCase(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			repositoryCtrl := gomock.NewController(t)
-			defer repositoryCtrl.Finish()
 			userRespository := mockdb.NewMockUserRepository(repositoryCtrl)
 
 			distributorCtrl := gomock.NewController(t)
-			defer distributorCtrl.Finish()
 			taskDistrubutor := mockwk.NewMockTaskDistributor(distributorCtrl)
 
-			tc.buildStubs(userRespository, taskDistrubutor)
+			tc.buildMocks(userRespository, taskDistrubutor)
 
 			userApplication := NewUserApplication(userRespository, nil, taskDistrubutor, nil, nil)
 			res, err := userApplication.Create(context.Background(), tc.arg)
@@ -337,7 +355,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 	tests := []struct {
 		name          string
 		arg           service.UpdateUserParams
-		buildStubs    func(userRepository *mockdb.MockUserRepository)
+		buildMocks    func(userRepository *mockdb.MockUserRepository)
 		checkResponse func(t *testing.T, updatedUser *domain.User, err error)
 	}{
 		{
@@ -347,7 +365,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 				FullName: &newFullname,
 				Email:    &newEmail,
 			},
-			buildStubs: func(store *mockdb.MockUserRepository) {
+			buildMocks: func(store *mockdb.MockUserRepository) {
 				arg := port.UpdateUserParams{
 					Username: user.Username,
 					FullName: &newFullname,
@@ -385,7 +403,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 				Email:    &user.Email,
 				Password: &password,
 			},
-			buildStubs: func(userRepository *mockdb.MockUserRepository) {
+			buildMocks: func(userRepository *mockdb.MockUserRepository) {
 				userRepository.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -404,7 +422,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 				Email:    &user.Email,
 				Password: &password,
 			},
-			buildStubs: func(userRepository *mockdb.MockUserRepository) {
+			buildMocks: func(userRepository *mockdb.MockUserRepository) {
 				userRepository.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -423,7 +441,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 				Email:    &user.Email,
 				Password: &password,
 			},
-			buildStubs: func(userRepository *mockdb.MockUserRepository) {
+			buildMocks: func(userRepository *mockdb.MockUserRepository) {
 				userRepository.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -442,7 +460,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 				Email:    &user.Email,
 				Password: &password,
 			},
-			buildStubs: func(userRepository *mockdb.MockUserRepository) {
+			buildMocks: func(userRepository *mockdb.MockUserRepository) {
 				userRepository.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -461,7 +479,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 				Email:    new(string),
 				Password: &password,
 			},
-			buildStubs: func(userRepository *mockdb.MockUserRepository) {
+			buildMocks: func(userRepository *mockdb.MockUserRepository) {
 				userRepository.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -480,7 +498,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 				Email:    &invalidEmail,
 				Password: &password,
 			},
-			buildStubs: func(userRepository *mockdb.MockUserRepository) {
+			buildMocks: func(userRepository *mockdb.MockUserRepository) {
 				userRepository.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -499,7 +517,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 				Email:    &user.Email,
 				Password: new(string),
 			},
-			buildStubs: func(userRepository *mockdb.MockUserRepository) {
+			buildMocks: func(userRepository *mockdb.MockUserRepository) {
 				userRepository.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -518,7 +536,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 				Email:    &user.Email,
 				Password: &password,
 			},
-			buildStubs: func(userRepository *mockdb.MockUserRepository) {
+			buildMocks: func(userRepository *mockdb.MockUserRepository) {
 				userRepository.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(1).
@@ -533,14 +551,141 @@ func TestUpdateUserUseCase(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			repositoryCtrl := gomock.NewController(t)
-			defer repositoryCtrl.Finish()
 			userRespository := mockdb.NewMockUserRepository(repositoryCtrl)
 
-			tc.buildStubs(userRespository)
+			tc.buildMocks(userRespository)
 
 			userApplication := NewUserApplication(userRespository, nil, nil, nil, nil)
 			res, err := userApplication.Update(context.Background(), tc.arg)
 			tc.checkResponse(t, res, err)
+		})
+	}
+}
+
+func TestLoginUserUseCase(t *testing.T) {
+	user, password := randomUser(t)
+	session := randomSession(t, user.Username)
+
+	testCases := []struct {
+		name          string
+		arg           service.LoginUserParams
+		buildMocks    func(userRepository *mockdb.MockUserRepository, sessionRepository *mockdb.MockSessionRepository)
+		checkResponse func(t *testing.T, result *service.LoginUserResult, err error)
+	}{
+		{
+			name: "OK",
+			arg: service.LoginUserParams{
+				Username: user.Username,
+				Password: password,
+			},
+			buildMocks: func(userRepository *mockdb.MockUserRepository, sessionRepository *mockdb.MockSessionRepository) {
+				userRepository.EXPECT().
+					GetUser(gomock.Any(), gomock.Eq(user.Username)).
+					Times(1).
+					Return(user, nil)
+
+				sessionRepository.EXPECT().
+					CreateSession(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(session, nil)
+			},
+			checkResponse: func(t *testing.T, result *service.LoginUserResult, err error) {
+				require.Equal(t, result.User, user)
+				require.Equal(t, result.SessionId, session.ID)
+				require.NotEmpty(t, result.AccessToken)
+				require.NotEmpty(t, result.RefreshToken)
+				require.True(t, result.AccessTokenExpiresAt.After(time.Now()))
+				require.True(t, result.RefreshTokenExpiresAt.After(time.Now()))
+			},
+		},
+		{
+			name: "IncorrectPassword",
+			arg: service.LoginUserParams{
+				Username: user.Username,
+				Password: "incorrect",
+			},
+			buildMocks: func(userRepository *mockdb.MockUserRepository, sessionRepository *mockdb.MockSessionRepository) {
+				userRepository.EXPECT().
+					GetUser(gomock.Any(), gomock.Eq(user.Username)).
+					Times(1).
+					Return(user, nil)
+
+				sessionRepository.EXPECT().
+					CreateSession(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(t *testing.T, result *service.LoginUserResult, err error) {
+				require.Error(t, err)
+				require.ErrorIs(t, err, ErrInvalidLoginPassword)
+				require.Nil(t, result)
+			},
+		},
+		{
+			name: "InvalidUsername",
+			arg: service.LoginUserParams{
+				Username: "invalid-user#1",
+				Password: password,
+			},
+			buildMocks: func(userRepository *mockdb.MockUserRepository, sessionRepository *mockdb.MockSessionRepository) {
+				userRepository.EXPECT().
+					GetUser(gomock.Any(), gomock.Any()).
+					Times(0)
+
+				sessionRepository.EXPECT().
+					CreateSession(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(t *testing.T, result *service.LoginUserResult, err error) {
+				require.Error(t, err)
+				_, ok := err.(*validator.ValidationErrors)
+				require.True(t, ok)
+			},
+		},
+		{
+			name: "PasswordTooShort",
+			arg: service.LoginUserParams{
+				Username: user.Username,
+				Password: "short",
+			},
+			buildMocks: func(userRepository *mockdb.MockUserRepository, sessionRepository *mockdb.MockSessionRepository) {
+				userRepository.EXPECT().
+					GetUser(gomock.Any(), gomock.Any()).
+					Times(0)
+
+				sessionRepository.EXPECT().
+					CreateSession(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(t *testing.T, result *service.LoginUserResult, err error) {
+				require.Error(t, err)
+				_, ok := err.(*validator.ValidationErrors)
+				require.True(t, ok)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			userCtrl := gomock.NewController(t)
+			userRepository := mockdb.NewMockUserRepository(userCtrl)
+
+			sessionCtrl := gomock.NewController(t)
+			sessionRepository := mockdb.NewMockSessionRepository(sessionCtrl)
+
+			tc.buildMocks(userRepository, sessionRepository)
+
+			tokenMaker, err := token.NewJWTMaker(util.RandomString(32))
+			require.NoError(t, err)
+
+			config := util.Config{
+				AccessTokenDuration:  time.Minute,
+				RefreshTokenDuration: time.Minute,
+			}
+
+			userApplication := NewUserApplication(userRepository, sessionRepository, nil, tokenMaker, &config)
+
+			result, err := userApplication.Login(context.Background(), tc.arg)
+			tc.checkResponse(t, result, err)
 		})
 	}
 }

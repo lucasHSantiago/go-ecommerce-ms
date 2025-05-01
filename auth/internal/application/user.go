@@ -103,20 +103,19 @@ func (u *UserApplication) Update(ctx context.Context, arg service.UpdateUserPara
 	return user, nil
 }
 
-// @TODO: testar
 func (u *UserApplication) Login(ctx context.Context, arg service.LoginUserParams) (*service.LoginUserResult, error) {
 	if errValidation := validateLoginUserParams(arg); errValidation != nil {
-		return nil, fmt.Errorf("validation error: %w", errValidation)
+		return nil, errValidation
 	}
 
 	user, err := u.userRepository.GetUser(ctx, arg.Username)
 	if err != nil {
-		return nil, fmt.Errorf("username invalid: %w", err)
+		return nil, err
 	}
 
 	err = util.CheckPassword(arg.Password, user.HashedPassword)
 	if err != nil {
-		return nil, fmt.Errorf("invalid usarname or password")
+		return nil, ErrInvalidLoginPassword
 	}
 
 	accessToken, accessPayload, err := u.tokenMaker.CreateToken(user.Username, user.Role, u.config.AccessTokenDuration)
@@ -140,12 +139,12 @@ func (u *UserApplication) Login(ctx context.Context, arg service.LoginUserParams
 		ExpiresAt:    refreshPayload.ExpiredAt,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create session: %w", err)
+		return nil, err
 	}
 
 	response := &service.LoginUserResult{
 		User:                  user,
-		SessionId:             session.ID.String(),
+		SessionId:             session.ID,
 		AccessToken:           accessToken,
 		RefreshToken:          refreshToken,
 		AccessTokenExpiresAt:  &accessPayload.ExpiredAt,

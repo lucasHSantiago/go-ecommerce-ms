@@ -7,7 +7,11 @@ import (
 	"github.com/google/uuid"
 )
 
-var ErrSessionNotFound = errors.New("session not found")
+var (
+	ErrSessionNotFound = errors.New("session not found")
+	ErrReadSession     = errors.New("failed to get session")
+	ErrCreateSession   = errors.New("failed to create session")
+)
 
 type Session struct {
 	ID           uuid.UUID

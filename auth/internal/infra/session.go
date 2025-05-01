@@ -19,7 +19,7 @@ func NewSessionRepository(connPool DBTX) port.SessionRepository {
 	return &SessionRepository{connPool}
 }
 
-func getSessionError(err error, msg string) error {
+func getSessionError(err error, defaultReturn error, msg string) error {
 	if errors.Is(err, ErrRecordNotFound) {
 		return domain.ErrSessionNotFound
 	}
@@ -34,7 +34,7 @@ func getSessionError(err error, msg string) error {
 	}
 
 	log.Error().Err(err).Msg(msg)
-	return err
+	return defaultReturn
 }
 
 const createSession = `
@@ -66,7 +66,7 @@ func (s *SessionRepository) CreateSession(ctx context.Context, arg port.CreateSe
 
 	session, err := pgx.CollectOneRow(rows, pgx.RowToAddrOfStructByName[domain.Session])
 	if err != nil {
-		return nil, getSessionError(err, "failed to create session")
+		return nil, getSessionError(err, domain.ErrCreateSession, "failed to create session")
 	}
 
 	return session, err
@@ -83,7 +83,7 @@ func (s *SessionRepository) GetSession(ctx context.Context, id uuid.UUID) (*doma
 
 	session, err := pgx.CollectOneRow(rows, pgx.RowToAddrOfStructByName[domain.Session])
 	if err != nil {
-		return nil, getSessionError(err, "failed to get session")
+		return nil, getSessionError(err, domain.ErrReadSession, "failed to get session")
 	}
 
 	return session, err

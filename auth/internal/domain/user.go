@@ -9,6 +9,9 @@ var (
 	ErrUsernameAlreadyExist = errors.New("username already exists")
 	ErrEmailAlreadyExist    = errors.New("email already exists")
 	ErrUserNotFound         = errors.New("user not found")
+	ErrReadUser             = errors.New("failed to get user")
+	ErrCreateUser           = errors.New("failed to create user")
+	ErrUpdateUser           = errors.New("failed to update user")
 )
 
 const (
