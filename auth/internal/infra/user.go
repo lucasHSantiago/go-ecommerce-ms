@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/port"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 	"github.com/rs/zerolog/log"
 )
@@ -15,7 +15,7 @@ type UserRepository struct {
 	connPool DBTX
 }
 
-func NewUserRepository(connPool DBTX) port.UserRepository {
+func NewUserRepository(connPool DBTX) *UserRepository {
 	return &UserRepository{connPool}
 }
 
@@ -50,7 +50,7 @@ email
 ) RETURNING username, hashed_password, full_name, email, password_changed_at, created_at, is_email_verified, role
 `
 
-func (u *UserRepository) CreateUser(ctx context.Context, arg port.CreateUserParams) (*domain.User, error) {
+func (u *UserRepository) CreateUser(ctx context.Context, arg params.CreateUserRepo) (*domain.User, error) {
 	args := []any{
 		arg.Username,
 		arg.HashedPassword,
@@ -97,7 +97,7 @@ WHERE
 RETURNING username, hashed_password, full_name, email, password_changed_at, created_at, is_email_verified, role
 `
 
-func (u *UserRepository) UpdateUser(ctx context.Context, arg port.UpdateUserParams) (*domain.User, error) {
+func (u *UserRepository) UpdateUser(ctx context.Context, arg params.UpdateUserRepo) (*domain.User, error) {
 	args := []any{
 		util.StringToText(arg.HashedPassword),
 		util.TimeToTimestamptz(arg.PasswordChangedAt),
@@ -117,12 +117,12 @@ func (u *UserRepository) UpdateUser(ctx context.Context, arg port.UpdateUserPara
 	return user, err
 }
 
-func (u *UserRepository) CreateUserTx(ctx context.Context, arg port.CreateUserTxParams) (port.CreateUserTxResult, error) {
-	var result port.CreateUserTxResult
+func (u *UserRepository) CreateUserTx(ctx context.Context, arg params.CreateUserTxRepo) (params.CreateUserTxRepoResult, error) {
+	var result params.CreateUserTxRepoResult
 
 	err := execTx(ctx, u.connPool, func(tx pgx.Tx) error {
 		userRepository := NewUserRepository(tx)
-		user, err := userRepository.CreateUser(ctx, arg.CreateUserParams)
+		user, err := userRepository.CreateUser(ctx, arg.CreateUserRepo)
 		if err != nil {
 			return err
 		}

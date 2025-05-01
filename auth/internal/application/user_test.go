@@ -10,26 +10,25 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/port"
-	mockdb "github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/port/mock"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/distributor"
+	mockwk "github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/distributor/mock"
+	mockdb "github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/mock"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/gapi/service"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/token"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/validator"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/worker"
-	mockwk "github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/worker/mock"
 	"github.com/stretchr/testify/require"
 )
 
 type eqCreateUserParamsTxMatcher struct {
-	arg      port.CreateUserTxParams
+	arg      params.CreateUserTxRepo
 	password string
 	user     domain.User
 }
 
 func (expected eqCreateUserParamsTxMatcher) Matches(x any) bool {
-	actualArg, ok := x.(port.CreateUserTxParams)
+	actualArg, ok := x.(params.CreateUserTxRepo)
 	if !ok {
 		return false
 	}
@@ -40,7 +39,7 @@ func (expected eqCreateUserParamsTxMatcher) Matches(x any) bool {
 	}
 
 	expected.arg.HashedPassword = actualArg.HashedPassword
-	if !reflect.DeepEqual(expected.arg.CreateUserParams, actualArg.CreateUserParams) {
+	if !reflect.DeepEqual(expected.arg.CreateUserRepo, actualArg.CreateUserRepo) {
 		return false
 	}
 
@@ -53,7 +52,7 @@ func (e eqCreateUserParamsTxMatcher) String() string {
 	return fmt.Sprintf("matches arg %v and password %v", e.arg, e.password)
 }
 
-func EqCreateUserTxParams(arg port.CreateUserTxParams, password string, user domain.User) gomock.Matcher {
+func EqCreateUserTxParams(arg params.CreateUserTxRepo, password string, user domain.User) gomock.Matcher {
 	return eqCreateUserParamsTxMatcher{arg, password, user}
 }
 
@@ -97,21 +96,21 @@ func TestCreateUserUseCase(t *testing.T) {
 
 	testCases := []struct {
 		name          string
-		arg           service.CreateUserParams
+		arg           params.CreateUserApp
 		buildMocks    func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor)
 		checkResponse func(t *testing.T, res *domain.User, err error)
 	}{
 		{
 			name: "OK",
-			arg: service.CreateUserParams{
+			arg: params.CreateUserApp{
 				Username: user.Username,
 				FullName: user.FullName,
 				Email:    user.Email,
 				Password: password,
 			},
 			buildMocks: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
-				arg := port.CreateUserTxParams{
-					CreateUserParams: port.CreateUserParams{
+				arg := params.CreateUserTxRepo{
+					CreateUserRepo: params.CreateUserRepo{
 						Username: user.Username,
 						FullName: user.FullName,
 						Email:    user.Email,
@@ -121,9 +120,9 @@ func TestCreateUserUseCase(t *testing.T) {
 				userRepository.EXPECT().
 					CreateUserTx(gomock.Any(), EqCreateUserTxParams(arg, password, *user)).
 					Times(1).
-					Return(port.CreateUserTxResult{User: *user}, nil)
+					Return(params.CreateUserTxRepoResult{User: *user}, nil)
 
-				taskPayload := &worker.PayloadSendVerifyEmail{
+				taskPayload := &distributor.PayloadSendVerifyEmail{
 					Username: user.Username,
 				}
 
@@ -142,7 +141,7 @@ func TestCreateUserUseCase(t *testing.T) {
 		},
 		{
 			name: "RequiredUserName",
-			arg: service.CreateUserParams{
+			arg: params.CreateUserApp{
 				Username: "",
 				FullName: user.FullName,
 				Email:    user.Email,
@@ -165,7 +164,7 @@ func TestCreateUserUseCase(t *testing.T) {
 		},
 		{
 			name: "InvalidUsername",
-			arg: service.CreateUserParams{
+			arg: params.CreateUserApp{
 				Username: "invalid 123",
 				FullName: user.FullName,
 				Email:    user.Email,
@@ -188,7 +187,7 @@ func TestCreateUserUseCase(t *testing.T) {
 		},
 		{
 			name: "RequiredFullName",
-			arg: service.CreateUserParams{
+			arg: params.CreateUserApp{
 				Username: user.Username,
 				FullName: "",
 				Email:    user.Email,
@@ -211,7 +210,7 @@ func TestCreateUserUseCase(t *testing.T) {
 		},
 		{
 			name: "InvalidFullName",
-			arg: service.CreateUserParams{
+			arg: params.CreateUserApp{
 				Username: user.Username,
 				FullName: "Invalid123",
 				Email:    user.Email,
@@ -234,7 +233,7 @@ func TestCreateUserUseCase(t *testing.T) {
 		},
 		{
 			name: "RequiredEmail",
-			arg: service.CreateUserParams{
+			arg: params.CreateUserApp{
 				Username: user.Username,
 				FullName: user.FullName,
 				Email:    "",
@@ -257,7 +256,7 @@ func TestCreateUserUseCase(t *testing.T) {
 		},
 		{
 			name: "InvalidEmail",
-			arg: service.CreateUserParams{
+			arg: params.CreateUserApp{
 				Username: user.Username,
 				FullName: user.FullName,
 				Email:    "invalid",
@@ -280,7 +279,7 @@ func TestCreateUserUseCase(t *testing.T) {
 		},
 		{
 			name: "RequiredPassword",
-			arg: service.CreateUserParams{
+			arg: params.CreateUserApp{
 				Username: user.Username,
 				FullName: user.FullName,
 				Email:    user.Email,
@@ -303,7 +302,7 @@ func TestCreateUserUseCase(t *testing.T) {
 		},
 		{
 			name: "InternalError",
-			arg: service.CreateUserParams{
+			arg: params.CreateUserApp{
 				Username: user.Username,
 				FullName: user.FullName,
 				Email:    user.Email,
@@ -313,7 +312,7 @@ func TestCreateUserUseCase(t *testing.T) {
 				userRepository.EXPECT().
 					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(port.CreateUserTxResult{}, sql.ErrConnDone)
+					Return(params.CreateUserTxRepoResult{}, sql.ErrConnDone)
 
 				taskDistributor.EXPECT().
 					DistributeTaskSendVerifyEmail(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -336,7 +335,7 @@ func TestCreateUserUseCase(t *testing.T) {
 
 			tc.buildMocks(userRespository, taskDistrubutor)
 
-			userApplication := NewUserApplication(userRespository, nil, taskDistrubutor, nil, nil)
+			userApplication := NewUserApplication(userRespository, nil, nil, nil, nil)
 			res, err := userApplication.Create(context.Background(), tc.arg)
 			tc.checkResponse(t, res, err)
 		})
@@ -354,19 +353,19 @@ func TestUpdateUserUseCase(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		arg           service.UpdateUserParams
+		arg           params.UpdateUserApp
 		buildMocks    func(userRepository *mockdb.MockUserRepository)
 		checkResponse func(t *testing.T, updatedUser *domain.User, err error)
 	}{
 		{
 			name: "OK",
-			arg: service.UpdateUserParams{
+			arg: params.UpdateUserApp{
 				Username: user.Username,
 				FullName: &newFullname,
 				Email:    &newEmail,
 			},
 			buildMocks: func(store *mockdb.MockUserRepository) {
-				arg := port.UpdateUserParams{
+				arg := params.UpdateUserRepo{
 					Username: user.Username,
 					FullName: &newFullname,
 					Email:    &newEmail,
@@ -397,7 +396,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 		},
 		{
 			name: "RequiredUserName",
-			arg: service.UpdateUserParams{
+			arg: params.UpdateUserApp{
 				Username: "",
 				FullName: &user.FullName,
 				Email:    &user.Email,
@@ -416,7 +415,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 		},
 		{
 			name: "InvalidUsername",
-			arg: service.UpdateUserParams{
+			arg: params.UpdateUserApp{
 				Username: "invalid 123",
 				FullName: &user.FullName,
 				Email:    &user.Email,
@@ -435,7 +434,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 		},
 		{
 			name: "RequiredFullName",
-			arg: service.UpdateUserParams{
+			arg: params.UpdateUserApp{
 				Username: user.Username,
 				FullName: new(string),
 				Email:    &user.Email,
@@ -454,7 +453,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 		},
 		{
 			name: "InvalidFullName",
-			arg: service.UpdateUserParams{
+			arg: params.UpdateUserApp{
 				Username: user.Username,
 				FullName: &invalidFullname,
 				Email:    &user.Email,
@@ -473,7 +472,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 		},
 		{
 			name: "RequiredEmail",
-			arg: service.UpdateUserParams{
+			arg: params.UpdateUserApp{
 				Username: user.Username,
 				FullName: &user.FullName,
 				Email:    new(string),
@@ -492,7 +491,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 		},
 		{
 			name: "InvalidEmail",
-			arg: service.UpdateUserParams{
+			arg: params.UpdateUserApp{
 				Username: user.Username,
 				FullName: &user.FullName,
 				Email:    &invalidEmail,
@@ -511,7 +510,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 		},
 		{
 			name: "RequiredPassword",
-			arg: service.UpdateUserParams{
+			arg: params.UpdateUserApp{
 				Username: user.Username,
 				FullName: &user.FullName,
 				Email:    &user.Email,
@@ -530,7 +529,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 		},
 		{
 			name: "InternalError",
-			arg: service.UpdateUserParams{
+			arg: params.UpdateUserApp{
 				Username: user.Username,
 				FullName: &user.FullName,
 				Email:    &user.Email,
@@ -568,13 +567,13 @@ func TestLoginUserUseCase(t *testing.T) {
 
 	testCases := []struct {
 		name          string
-		arg           service.LoginUserParams
+		arg           params.LoginUserApp
 		buildMocks    func(userRepository *mockdb.MockUserRepository, sessionRepository *mockdb.MockSessionRepository)
-		checkResponse func(t *testing.T, result *service.LoginUserResult, err error)
+		checkResponse func(t *testing.T, result *params.LoginUserAppResult, err error)
 	}{
 		{
 			name: "OK",
-			arg: service.LoginUserParams{
+			arg: params.LoginUserApp{
 				Username: user.Username,
 				Password: password,
 			},
@@ -589,7 +588,7 @@ func TestLoginUserUseCase(t *testing.T) {
 					Times(1).
 					Return(session, nil)
 			},
-			checkResponse: func(t *testing.T, result *service.LoginUserResult, err error) {
+			checkResponse: func(t *testing.T, result *params.LoginUserAppResult, err error) {
 				require.Equal(t, result.User, user)
 				require.Equal(t, result.SessionId, session.ID)
 				require.NotEmpty(t, result.AccessToken)
@@ -600,7 +599,7 @@ func TestLoginUserUseCase(t *testing.T) {
 		},
 		{
 			name: "IncorrectPassword",
-			arg: service.LoginUserParams{
+			arg: params.LoginUserApp{
 				Username: user.Username,
 				Password: "incorrect",
 			},
@@ -614,7 +613,7 @@ func TestLoginUserUseCase(t *testing.T) {
 					CreateSession(gomock.Any(), gomock.Any()).
 					Times(0)
 			},
-			checkResponse: func(t *testing.T, result *service.LoginUserResult, err error) {
+			checkResponse: func(t *testing.T, result *params.LoginUserAppResult, err error) {
 				require.Error(t, err)
 				require.ErrorIs(t, err, ErrInvalidLoginPassword)
 				require.Nil(t, result)
@@ -622,7 +621,7 @@ func TestLoginUserUseCase(t *testing.T) {
 		},
 		{
 			name: "InvalidUsername",
-			arg: service.LoginUserParams{
+			arg: params.LoginUserApp{
 				Username: "invalid-user#1",
 				Password: password,
 			},
@@ -635,7 +634,7 @@ func TestLoginUserUseCase(t *testing.T) {
 					CreateSession(gomock.Any(), gomock.Any()).
 					Times(0)
 			},
-			checkResponse: func(t *testing.T, result *service.LoginUserResult, err error) {
+			checkResponse: func(t *testing.T, result *params.LoginUserAppResult, err error) {
 				require.Error(t, err)
 				_, ok := err.(*validator.ValidationErrors)
 				require.True(t, ok)
@@ -643,7 +642,7 @@ func TestLoginUserUseCase(t *testing.T) {
 		},
 		{
 			name: "PasswordTooShort",
-			arg: service.LoginUserParams{
+			arg: params.LoginUserApp{
 				Username: user.Username,
 				Password: "short",
 			},
@@ -656,7 +655,7 @@ func TestLoginUserUseCase(t *testing.T) {
 					CreateSession(gomock.Any(), gomock.Any()).
 					Times(0)
 			},
-			checkResponse: func(t *testing.T, result *service.LoginUserResult, err error) {
+			checkResponse: func(t *testing.T, result *params.LoginUserAppResult, err error) {
 				require.Error(t, err)
 				_, ok := err.(*validator.ValidationErrors)
 				require.True(t, ok)

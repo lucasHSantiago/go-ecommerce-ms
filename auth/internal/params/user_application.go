@@ -1,43 +1,36 @@
-package service
+package params
 
 import (
-	"context"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
 )
 
-type CreateUserParams struct {
+type CreateUserApp struct {
 	Username string
 	FullName string
 	Email    string
 	Password string
 }
 
-type UpdateUserParams struct {
+type UpdateUserApp struct {
 	Username string
 	FullName *string
 	Email    *string
 	Password *string
 }
 
-type LoginUserParams struct {
+type LoginUserApp struct {
 	Username string
 	Password string
 }
 
-type LoginUserResult struct {
+type LoginUserAppResult struct {
 	User                  *domain.User
 	SessionId             uuid.UUID
 	AccessToken           string
 	RefreshToken          string
 	AccessTokenExpiresAt  *time.Time
 	RefreshTokenExpiresAt *time.Time
-}
-
-type UserApplication interface {
-	Create(ctx context.Context, arg CreateUserParams) (*domain.User, error)
-	Update(ctx context.Context, arg UpdateUserParams) (*domain.User, error)
-	Login(ctx context.Context, arg LoginUserParams) (*LoginUserResult, error)
 }

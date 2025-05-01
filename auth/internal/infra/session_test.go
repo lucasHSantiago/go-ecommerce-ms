@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/port"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +15,7 @@ import (
 func createRandomSession(t *testing.T) domain.Session {
 	user := createRandomUser(t)
 
-	arg := port.CreateSessionParams{
+	arg := params.CreateSessionRepo{
 		ID:           uuid.New(),
 		Username:     user.Username,
 		RefreshToken: util.RandomString(32),
@@ -46,7 +46,7 @@ func TestCreateSession(t *testing.T) {
 }
 
 func TestCreateSessionInvalidUser(t *testing.T) {
-	arg := port.CreateSessionParams{
+	arg := params.CreateSessionRepo{
 		ID:           uuid.New(),
 		Username:     "",
 		RefreshToken: util.RandomString(32),

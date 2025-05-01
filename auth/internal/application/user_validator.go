@@ -5,7 +5,7 @@ import (
 	"net/mail"
 	"regexp"
 
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/gapi/service"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/validator"
 )
 
@@ -14,7 +14,7 @@ var (
 	isValidFullName = regexp.MustCompile(`^[A-Za-z ]+$`).MatchString
 )
 
-func validateCreateUserParams(arg service.CreateUserParams) *validator.ValidationErrors {
+func validateCreateUserParams(arg params.CreateUserApp) *validator.ValidationErrors {
 	var errs validator.ValidationErrors
 
 	if err := validateUsername(arg.Username); err != nil {
@@ -40,7 +40,7 @@ func validateCreateUserParams(arg service.CreateUserParams) *validator.Validatio
 	return nil
 }
 
-func validateUpdateUserParams(arg service.UpdateUserParams) *validator.ValidationErrors {
+func validateUpdateUserParams(arg params.UpdateUserApp) *validator.ValidationErrors {
 	var errs validator.ValidationErrors
 
 	if err := validateUsername(arg.Username); err != nil {
@@ -72,7 +72,7 @@ func validateUpdateUserParams(arg service.UpdateUserParams) *validator.Validatio
 	return nil
 }
 
-func validateLoginUserParams(arg service.LoginUserParams) *validator.ValidationErrors {
+func validateLoginUserParams(arg params.LoginUserApp) *validator.ValidationErrors {
 	var errs validator.ValidationErrors
 
 	if err := validateUsername(arg.Username); err != nil {

@@ -6,18 +6,26 @@ import (
 	"fmt"
 
 	"github.com/hibiken/asynq"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/port"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 	"github.com/rs/zerolog/log"
 )
 
 const TaskSendVerifyEmail = "task:send_verify_email"
 
-type PayloadSendVerifyEmail struct {
-	Username string `json:"username"`
+type RedisTaskDistributor struct {
+	client *asynq.Client
 }
 
-func (r *RedisTaskDistributor) DistributeTaskSendVerifyEmail(ctx context.Context, payload *PayloadSendVerifyEmail, opts ...asynq.Option) error {
+func NewRedisTaskDistributor(redisOpt asynq.RedisClientOpt) *RedisTaskDistributor {
+	client := asynq.NewClient(redisOpt)
+	return &RedisTaskDistributor{
+		client: client,
+	}
+}
+
+func (r *RedisTaskDistributor) DistributeTaskSendVerifyEmail(ctx context.Context, payload *application.PayloadSendVerifyEmail, opts ...asynq.Option) error {
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal task payload: %w", err)
@@ -40,7 +48,7 @@ func (r *RedisTaskDistributor) DistributeTaskSendVerifyEmail(ctx context.Context
 }
 
 func (r *RedisTaskProcessor) ProcessTaskSendVerifyEmail(ctx context.Context, task *asynq.Task) error {
-	var payload PayloadSendVerifyEmail
+	var payload application.PayloadSendVerifyEmail
 	if err := json.Unmarshal(task.Payload(), &payload); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %w", asynq.SkipRetry)
 	}
@@ -50,7 +58,7 @@ func (r *RedisTaskProcessor) ProcessTaskSendVerifyEmail(ctx context.Context, tas
 		return fmt.Errorf("failed to get user: %w", err)
 	}
 
-	verifyEmail, err := r.verifyEmailRepository.CreateVerifyEmail(ctx, port.CreateVerifyEmailParams{
+	verifyEmail, err := r.verifyEmailRepository.CreateVerifyEmail(ctx, params.CreateVerifyEmailRepo{
 		Username:   user.Username,
 		Email:      user.Email,
 		SecretCode: util.RandomString(32),

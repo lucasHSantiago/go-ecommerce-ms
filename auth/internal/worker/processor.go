@@ -4,14 +4,9 @@ import (
 	"context"
 
 	"github.com/hibiken/asynq"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/port"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/mail"
 	"github.com/rs/zerolog/log"
-)
-
-const (
-	CriticalQueue = "critical"
-	DefaultQueue  = "default"
 )
 
 type TaskProcessor interface {
@@ -22,18 +17,18 @@ type TaskProcessor interface {
 
 type RedisTaskProcessor struct {
 	server                *asynq.Server
-	userRepository        port.UserRepository
-	verifyEmailRepository port.VerifyEmailRepository
+	userRepository        application.UserRepository
+	verifyEmailRepository application.VerifyEmailRepository
 	mailer                mail.EmailSender
 }
 
-func NewRedisTaskProcessor(redisOpt asynq.RedisClientOpt, userRepository port.UserRepository, verifyEmailRepository port.VerifyEmailRepository, mailer mail.EmailSender) TaskProcessor {
+func NewRedisTaskProcessor(redisOpt asynq.RedisClientOpt, userRepository application.UserRepository, verifyEmailRepository application.VerifyEmailRepository, mailer mail.EmailSender) *RedisTaskProcessor {
 	server := asynq.NewServer(
 		redisOpt,
 		asynq.Config{
 			Queues: map[string]int{
-				CriticalQueue: 10,
-				DefaultQueue:  5,
+				application.CriticalQueue: 10,
+				application.DefaultQueue:  5,
 			},
 			ErrorHandler: asynq.ErrorHandlerFunc(func(_ context.Context, task *asynq.Task, err error) {
 				log.Error().

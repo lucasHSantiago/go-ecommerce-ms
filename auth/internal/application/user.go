@@ -6,23 +6,22 @@ import (
 	"time"
 
 	"github.com/hibiken/asynq"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/port"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/distributor"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/gapi/service"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/token"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/worker"
 )
 
 type UserApplication struct {
-	userRepository     port.UserRepository
-	sessionRespository port.SessionRepository
-	taskDistributor    worker.TaskDistributor
+	userRepository     UserRepository
+	sessionRespository SessionRepository
+	taskDistributor    TaskDistributor
 	tokenMaker         token.Maker
 	config             *util.Config
 }
 
-func NewUserApplication(userRepository port.UserRepository, sessionRepository port.SessionRepository, taskDistributor worker.TaskDistributor, tokenMaker token.Maker, config *util.Config) service.UserApplication {
+func NewUserApplication(userRepository UserRepository, sessionRepository SessionRepository, taskDistributor TaskDistributor, tokenMaker token.Maker, config *util.Config) *UserApplication {
 	return &UserApplication{
 		userRepository:     userRepository,
 		sessionRespository: sessionRepository,
@@ -32,7 +31,7 @@ func NewUserApplication(userRepository port.UserRepository, sessionRepository po
 	}
 }
 
-func (u *UserApplication) Create(ctx context.Context, arg service.CreateUserParams) (*domain.User, error) {
+func (u *UserApplication) Create(ctx context.Context, arg params.CreateUserApp) (*domain.User, error) {
 	if errValidation := validateCreateUserParams(arg); errValidation != nil {
 		return nil, errValidation
 	}
@@ -42,22 +41,22 @@ func (u *UserApplication) Create(ctx context.Context, arg service.CreateUserPara
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	argTx := port.CreateUserTxParams{
-		CreateUserParams: port.CreateUserParams{
+	argTx := params.CreateUserTxRepo{
+		CreateUserRepo: params.CreateUserRepo{
 			Username:       arg.Username,
 			HashedPassword: hashedPassword,
 			FullName:       arg.FullName,
 			Email:          arg.Email,
 		},
 		AfterCreate: func(user domain.User) error {
-			taskPayload := &worker.PayloadSendVerifyEmail{
+			taskPayload := &distributor.PayloadSendVerifyEmail{
 				Username: user.Username,
 			}
 
 			opts := []asynq.Option{
 				asynq.MaxRetry(10),
 				asynq.ProcessIn(10 * time.Second),
-				asynq.Queue(worker.CriticalQueue),
+				asynq.Queue(CriticalQueue),
 			}
 
 			return u.taskDistributor.DistributeTaskSendVerifyEmail(ctx, taskPayload, opts...)
@@ -72,12 +71,12 @@ func (u *UserApplication) Create(ctx context.Context, arg service.CreateUserPara
 	return &res.User, nil
 }
 
-func (u *UserApplication) Update(ctx context.Context, arg service.UpdateUserParams) (*domain.User, error) {
+func (u *UserApplication) Update(ctx context.Context, arg params.UpdateUserApp) (*domain.User, error) {
 	if errValidation := validateUpdateUserParams(arg); errValidation != nil {
 		return nil, errValidation
 	}
 
-	updateUserParams := port.UpdateUserParams{
+	updateUserParams := params.UpdateUserRepo{
 		FullName: arg.FullName,
 		Username: arg.Username,
 		Email:    arg.Email,
@@ -103,7 +102,7 @@ func (u *UserApplication) Update(ctx context.Context, arg service.UpdateUserPara
 	return user, nil
 }
 
-func (u *UserApplication) Login(ctx context.Context, arg service.LoginUserParams) (*service.LoginUserResult, error) {
+func (u *UserApplication) Login(ctx context.Context, arg params.LoginUserApp) (*params.LoginUserAppResult, error) {
 	if errValidation := validateLoginUserParams(arg); errValidation != nil {
 		return nil, errValidation
 	}
@@ -129,7 +128,7 @@ func (u *UserApplication) Login(ctx context.Context, arg service.LoginUserParams
 	}
 
 	metadata := util.ExtractMetadata(ctx)
-	session, err := u.sessionRespository.CreateSession(ctx, port.CreateSessionParams{
+	session, err := u.sessionRespository.CreateSession(ctx, params.CreateSessionRepo{
 		ID:           refreshPayload.ID,
 		Username:     user.Username,
 		RefreshToken: refreshToken,
@@ -142,7 +141,7 @@ func (u *UserApplication) Login(ctx context.Context, arg service.LoginUserParams
 		return nil, err
 	}
 
-	response := &service.LoginUserResult{
+	response := &params.LoginUserAppResult{
 		User:                  user,
 		SessionId:             session.ID,
 		AccessToken:           accessToken,

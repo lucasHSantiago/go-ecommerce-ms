@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/port"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 	"github.com/rs/zerolog/log"
 )
 
@@ -15,7 +15,7 @@ type SessionRepository struct {
 	connPool DBTX
 }
 
-func NewSessionRepository(connPool DBTX) port.SessionRepository {
+func NewSessionRepository(connPool DBTX) *SessionRepository {
 	return &SessionRepository{connPool}
 }
 
@@ -51,7 +51,7 @@ INSERT INTO sessions (
 ) RETURNING id, username, refresh_token, user_agent, client_ip, is_blocked, expires_at, created_at
 `
 
-func (s *SessionRepository) CreateSession(ctx context.Context, arg port.CreateSessionParams) (*domain.Session, error) {
+func (s *SessionRepository) CreateSession(ctx context.Context, arg params.CreateSessionRepo) (*domain.Session, error) {
 	args := []any{
 		arg.ID,
 		arg.Username,
