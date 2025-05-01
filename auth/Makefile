@@ -40,13 +40,9 @@ redis:
 .PHONY: proto
 proto:
 	rm -f proto/gen/*.go
-	rm -f docs/swagger/*.swagger.json
 	protoc --proto_path=proto --go_out=proto/gen --go_opt=paths=source_relative \
     --go-grpc_out=proto/gen --go-grpc_opt=paths=source_relative \
-	--grpc-gateway_out=proto/gen --grpc-gateway_opt=paths=source_relative \
-	--openapiv2_out=docs/swagger --openapiv2_opt=allow_merge=true,merge_file_name=go-ecommerce-ms \
 	proto/*.proto
-	statik -src=./docs/swagger -dest=./docs
 
 .PHONY: test
 test:

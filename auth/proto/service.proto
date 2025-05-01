@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package gen;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/lucasHSantiago/gobank/proto/gen";
+
+message User {
+  string username = 1;
+  string full_name = 2;
+  string email = 3;
+  google.protobuf.Timestamp password_changed_at = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message CreateUserRequest {
+  string username = 1;
+  string full_name = 2;
+  string email = 3;
+  string password = 4;
+}
+
+message CreateUserResponse {
+  User user = 1;
+}
+
+service AuthService {
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+  // rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+  // rpc LoginUser(LoginUserRequest) returns (LoginUserResponse);
+  // rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse);
+}
