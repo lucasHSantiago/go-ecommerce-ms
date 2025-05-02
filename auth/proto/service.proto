@@ -25,9 +25,20 @@ message CreateUserResponse {
   User user = 1;
 }
 
+message UpdateUserRequest {
+  string username = 1;
+  optional string full_name = 2;
+  optional string email = 3;
+  optional string password = 4;
+}
+
+message UpdateUserResponse {
+  User user = 1;
+}
+
 service AuthService {
   rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
-  // rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
   // rpc LoginUser(LoginUserRequest) returns (LoginUserResponse);
   // rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse);
 }

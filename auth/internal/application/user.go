@@ -11,6 +11,7 @@ import (
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/token"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
+	"github.com/rs/zerolog/log"
 )
 
 type UserApplication struct {
@@ -38,6 +39,7 @@ func (u *UserApplication) Create(ctx context.Context, arg params.CreateUserApp) 
 
 	hashedPassword, err := util.HashPassword(arg.Password)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to hash password")
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
@@ -85,6 +87,7 @@ func (u *UserApplication) Update(ctx context.Context, arg params.UpdateUserApp) 
 	if arg.Password != nil {
 		hashedPassword, err := util.HashPassword(*arg.Password)
 		if err != nil {
+			log.Error().Err(err).Msg("failed to hash password")
 			return nil, fmt.Errorf("failed to hash password: %w", err)
 		}
 
@@ -119,6 +122,7 @@ func (u *UserApplication) Login(ctx context.Context, arg params.LoginUserApp) (*
 
 	accessToken, accessPayload, err := u.tokenMaker.CreateToken(user.Username, user.Role, u.config.AccessTokenDuration)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to hash password")
 		return nil, fmt.Errorf("failed to create token: %w", err)
 	}
 

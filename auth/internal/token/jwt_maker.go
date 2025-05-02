@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/rs/zerolog/log"
 )
 
 const minSecretKeySize = 32
@@ -25,6 +26,7 @@ func NewJWTMaker(secretKey string) (Maker, error) {
 func (j *JWTMaker) CreateToken(username string, role string, duration time.Duration) (string, *Payload, error) {
 	payload, err := NewPayload(username, role, duration)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to create payload")
 		return "", nil, err
 	}
 
@@ -46,6 +48,7 @@ func (j *JWTMaker) VerifyToken(token string) (*Payload, error) {
 	jwtToken, err := jwt.ParseWithClaims(token, &Payload{}, keyFun)
 	if err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
+			log.Error().Err(err).Msg("failed to parse token")
 			return nil, ErrExpiredToken
 		}
 		return nil, ErrInvalidToken
