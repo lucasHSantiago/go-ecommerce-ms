@@ -83,3 +83,32 @@ func (v *VerifyEmailRepository) UpdateVerifyEmail(ctx context.Context, arg param
 
 	return verifyEmail, nil
 }
+
+func (v *VerifyEmailRepository) VerifyEmailTx(ctx context.Context, arg params.VerifyEmailTxRepo) (params.VerifyEmailTxRepoResult, error) {
+	var result params.VerifyEmailTxRepoResult
+
+	err := execTx(ctx, v.connPool, func(tx pgx.Tx) error {
+		var err error
+
+		verifyEmailRepository := NewVerifyEmailRepository(tx)
+		result.VerifyEmail, err = verifyEmailRepository.UpdateVerifyEmail(ctx, params.UpdateVerifyEmailRepo{
+			ID:         arg.EmailId,
+			SecretCode: arg.SecreteCode,
+		})
+		if err != nil {
+			return err
+		}
+
+		isEmailVerified := true
+
+		userRepository := NewUserRepository(tx)
+		result.User, err = userRepository.UpdateUser(ctx, params.UpdateUserRepo{
+			Username:        result.VerifyEmail.Username,
+			IsEmailVerified: &isEmailVerified,
+		})
+
+		return err
+	})
+
+	return result, err
+}

@@ -30,6 +30,7 @@ sqlc:
 mock:
 	mockgen -source internal/application/user_repository.go -destination internal/application/mock/user_repository.go -package mockdb
 	mockgen -source internal/application/session_repository.go -destination internal/application/mock/session_repository.go -package mockdb
+	mockgen -source internal/application/verify_email_repository.go -destination internal/application/mock/verify_email_repository.go -package mockdb
 	mockgen -source internal/application/distributor/distributor.go -destination internal/application/distributor/mock/distributor.go -package mockwk
 
 .PHONY: redis
