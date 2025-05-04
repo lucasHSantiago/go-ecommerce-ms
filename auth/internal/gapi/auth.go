@@ -11,18 +11,18 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type UserServer struct {
+type AuthServer struct {
 	gen.UnimplementedAuthServiceServer
 	userApplication UserApplication
 }
 
-func NewUserServer(userApplication UserApplication) *UserServer {
-	return &UserServer{
+func NewAuthServer(userApplication UserApplication) *AuthServer {
+	return &AuthServer{
 		userApplication: userApplication,
 	}
 }
 
-func (server *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest) (*gen.CreateUserResponse, error) {
+func (server *AuthServer) CreateUser(ctx context.Context, req *gen.CreateUserRequest) (*gen.CreateUserResponse, error) {
 	user, err := server.userApplication.Create(ctx, toCreateUserApp(req))
 	if err != nil {
 		var valErr *domain.ValidationErrors
@@ -36,7 +36,7 @@ func (server *UserServer) CreateUser(ctx context.Context, req *gen.CreateUserReq
 	return toCreateUserResponse(user), nil
 }
 
-func (server *UserServer) UpdateUser(ctx context.Context, req *gen.UpdateUserRequest) (*gen.UpdateUserResponse, error) {
+func (server *AuthServer) UpdateUser(ctx context.Context, req *gen.UpdateUserRequest) (*gen.UpdateUserResponse, error) {
 	user, err := server.userApplication.Update(ctx, toUpdateUserApp(req))
 	if err != nil {
 		var valErr *domain.ValidationErrors
@@ -53,7 +53,7 @@ func (server *UserServer) UpdateUser(ctx context.Context, req *gen.UpdateUserReq
 	return toUpdateUserResponse(user), nil
 }
 
-func (server *UserServer) LoginUser(ctx context.Context, req *gen.LoginUserRequest) (*gen.LoginUserResponse, error) {
+func (server *AuthServer) LoginUser(ctx context.Context, req *gen.LoginUserRequest) (*gen.LoginUserResponse, error) {
 	res, err := server.userApplication.Login(ctx, toLoginUserApp(req))
 	if err != nil {
 		var valErr *domain.ValidationErrors

@@ -283,7 +283,7 @@ func TestCreateUserAPI(t *testing.T) {
 			tc.buildMocks(userRespository)
 
 			userApplication := application.NewUserApplication(userRespository, nil, nil, nil, nil)
-			server := NewUserServer(userApplication)
+			server := NewAuthServer(userApplication)
 
 			res, err := server.CreateUser(context.Background(), tc.req)
 			tc.checkResponse(t, res, err)
@@ -385,7 +385,7 @@ func TestUpdateUserAPI(t *testing.T) {
 			tc.buildMocks(userRespository)
 
 			userApplication := application.NewUserApplication(userRespository, nil, nil, nil, nil)
-			server := NewUserServer(userApplication)
+			server := NewAuthServer(userApplication)
 
 			res, err := server.UpdateUser(context.Background(), tc.req)
 			tc.checkResponse(t, res, err)
@@ -450,7 +450,7 @@ func TestLoginUserAPI(t *testing.T) {
 			require.NoError(t, err)
 
 			userApplication := application.NewUserApplication(userRespository, sessionRepository, nil, tokenMaker, &config)
-			server := NewUserServer(userApplication)
+			server := NewAuthServer(userApplication)
 
 			res, err := server.LoginUser(context.Background(), tc.req)
 			tc.checkResponse(t, res, err)
