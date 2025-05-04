@@ -3,12 +3,15 @@ package gapi
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application"
 	mockdb "github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/mock"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/token"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/proto/gen"
 	"github.com/stretchr/testify/require"
@@ -32,6 +35,23 @@ func randomUser(t *testing.T) (*domain.User, string) {
 	}
 
 	return &user, password
+}
+
+func randomSession(t *testing.T, username string) *domain.Session {
+	t.Helper()
+
+	session := domain.Session{
+		ID:           uuid.New(),
+		Username:     username,
+		RefreshToken: "",
+		UserAgent:    "",
+		ClientIp:     "",
+		IsBlocked:    false,
+		ExpiresAt:    time.Now().Add(time.Minute),
+		CreatedAt:    time.Now().Add(-time.Minute),
+	}
+
+	return &session
 }
 
 func TestCreateUserAPI(t *testing.T) {
@@ -263,7 +283,7 @@ func TestCreateUserAPI(t *testing.T) {
 			tc.buildMocks(userRespository)
 
 			userApplication := application.NewUserApplication(userRespository, nil, nil, nil, nil)
-			server := newTestServer(t, userApplication)
+			server := NewUserServer(userApplication)
 
 			res, err := server.CreateUser(context.Background(), tc.req)
 			tc.checkResponse(t, res, err)
@@ -365,9 +385,74 @@ func TestUpdateUserAPI(t *testing.T) {
 			tc.buildMocks(userRespository)
 
 			userApplication := application.NewUserApplication(userRespository, nil, nil, nil, nil)
-			server := newTestServer(t, userApplication)
+			server := NewUserServer(userApplication)
 
 			res, err := server.UpdateUser(context.Background(), tc.req)
+			tc.checkResponse(t, res, err)
+		})
+	}
+}
+
+func TestLoginUserAPI(t *testing.T) {
+	user, password := randomUser(t)
+	session := randomSession(t, user.Username)
+
+	testCases := []struct {
+		name          string
+		req           *gen.LoginUserRequest
+		buildMocks    func(userRepository *mockdb.MockUserRepository, sessionRepository *mockdb.MockSessionRepository)
+		checkResponse func(t *testing.T, res *gen.LoginUserResponse, err error)
+	}{
+		{
+			name: "OK",
+			req: &gen.LoginUserRequest{
+				Username: user.Username,
+				Password: password,
+			},
+			buildMocks: func(userRepository *mockdb.MockUserRepository, sessionRepository *mockdb.MockSessionRepository) {
+				userRepository.EXPECT().
+					GetUser(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(user, nil)
+
+				sessionRepository.EXPECT().
+					CreateSession(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(session, nil)
+			},
+			checkResponse: func(t *testing.T, res *gen.LoginUserResponse, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				loginUser := res.GetUser()
+				require.Equal(t, user.Username, loginUser.Username)
+				require.NotNil(t, res.AccessToken)
+				require.NotNil(t, res.RefreshToken)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repositoryCtrl := gomock.NewController(t)
+			userRespository := mockdb.NewMockUserRepository(repositoryCtrl)
+
+			sessionCtrl := gomock.NewController(t)
+			sessionRepository := mockdb.NewMockSessionRepository(sessionCtrl)
+
+			tc.buildMocks(userRespository, sessionRepository)
+
+			config := util.Config{
+				AccessTokenDuration:  time.Minute,
+				RefreshTokenDuration: time.Minute,
+			}
+
+			tokenMaker, err := token.NewJWTMaker(util.RandomString(32))
+			require.NoError(t, err)
+
+			userApplication := application.NewUserApplication(userRespository, sessionRepository, nil, tokenMaker, &config)
+			server := NewUserServer(userApplication)
+
+			res, err := server.LoginUser(context.Background(), tc.req)
 			tc.checkResponse(t, res, err)
 		})
 	}

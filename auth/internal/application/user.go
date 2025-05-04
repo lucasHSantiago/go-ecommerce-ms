@@ -150,8 +150,8 @@ func (u *UserApplication) Login(ctx context.Context, arg params.LoginUserApp) (*
 		SessionId:             session.ID,
 		AccessToken:           accessToken,
 		RefreshToken:          refreshToken,
-		AccessTokenExpiresAt:  &accessPayload.ExpiredAt,
-		RefreshTokenExpiresAt: &refreshPayload.ExpiredAt,
+		AccessTokenExpiresAt:  accessPayload.ExpiredAt,
+		RefreshTokenExpiresAt: refreshPayload.ExpiredAt,
 	}
 
 	return response, nil

@@ -31,6 +31,6 @@ type LoginUserAppResult struct {
 	SessionId             uuid.UUID
 	AccessToken           string
 	RefreshToken          string
-	AccessTokenExpiresAt  *time.Time
-	RefreshTokenExpiresAt *time.Time
+	AccessTokenExpiresAt  time.Time
+	RefreshTokenExpiresAt time.Time
 }

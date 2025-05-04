@@ -36,9 +36,32 @@ message UpdateUserResponse {
   User user = 1;
 }
 
+message LoginUserRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginUserResponse {
+  User user = 1;
+  string session_id = 2;
+  string access_token = 3;
+  string refresh_token = 4;
+  google.protobuf.Timestamp access_token_expires_at = 5;
+  google.protobuf.Timestamp refresh_token_expires_at = 6;
+}
+
+message VerifyEmailRequest {
+  int64 email_id = 1;
+  string secret_code = 2;
+}
+
+message VerifyEmailResponse {
+  bool is_verified = 1;
+}
+
 service AuthService {
   rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
   rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
-  // rpc LoginUser(LoginUserRequest) returns (LoginUserResponse);
-  // rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse);
+  rpc LoginUser(LoginUserRequest) returns (LoginUserResponse);
+  rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse);
 }

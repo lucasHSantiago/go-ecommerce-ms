@@ -46,3 +46,21 @@ func toUpdateUserResponse(user *domain.User) *gen.UpdateUserResponse {
 		User: toUserResponse(user),
 	}
 }
+
+func toLoginUserApp(req *gen.LoginUserRequest) params.LoginUserApp {
+	return params.LoginUserApp{
+		Username: req.Username,
+		Password: req.Password,
+	}
+}
+
+func toLoginUserResponse(res *params.LoginUserAppResult) *gen.LoginUserResponse {
+	return &gen.LoginUserResponse{
+		User:                  toUserResponse(res.User),
+		SessionId:             res.SessionId.String(),
+		AccessToken:           res.AccessToken,
+		RefreshToken:          res.RefreshToken,
+		AccessTokenExpiresAt:  timestamppb.New(res.AccessTokenExpiresAt),
+		RefreshTokenExpiresAt: timestamppb.New(res.RefreshTokenExpiresAt),
+	}
+}

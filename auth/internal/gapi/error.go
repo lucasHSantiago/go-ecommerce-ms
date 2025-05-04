@@ -29,7 +29,3 @@ func invalidArgumentError(validations domain.ValidationErrors) error {
 
 	return statusDetails.Err()
 }
-
-func unauthenticatedError(err error) error {
-	return status.Errorf(codes.Unauthenticated, "unauthorized: %s", err)
-}
