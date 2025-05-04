@@ -1,3 +1,11 @@
+.PHONY: server
+server:
+	go run ./cmd/auth/main.go
+
+.PHONY: grpcui
+grpcui:
+	grpcui -plaintext localhost:8080
+
 .PHONY: postgres
 postgres:
 	docker run --name postgres -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=admin -d postgres:alpine

@@ -9,7 +9,7 @@ import (
 type Config struct {
 	Environment          string        `mapstructure:"ENVIRONMENT"`
 	DBSource             string        `mapstructure:"DB_SOURCE"`
-	MigrationURL         string        `mapstructure:"MIGRATION_URL"`
+	ServerAddress        string        `mapstructure:"SERVER_ADDRESS"`
 	TokenSecretKey       string        `mapstructure:"TOKEN_SECRET_KEY"`
 	AccessTokenDuration  time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`

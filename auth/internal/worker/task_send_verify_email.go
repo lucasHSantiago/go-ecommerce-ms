@@ -7,6 +7,7 @@ import (
 
 	"github.com/hibiken/asynq"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/distributor"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 	"github.com/rs/zerolog/log"
@@ -25,7 +26,7 @@ func NewRedisTaskDistributor(redisOpt asynq.RedisClientOpt) *RedisTaskDistributo
 	}
 }
 
-func (r *RedisTaskDistributor) DistributeTaskSendVerifyEmail(ctx context.Context, payload *application.PayloadSendVerifyEmail, opts ...asynq.Option) error {
+func (r *RedisTaskDistributor) DistributeTaskSendVerifyEmail(ctx context.Context, payload *distributor.PayloadSendVerifyEmail, opts ...asynq.Option) error {
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal task payload: %w", err)
