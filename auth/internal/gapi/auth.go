@@ -13,12 +13,14 @@ import (
 
 type AuthServer struct {
 	gen.UnimplementedAuthServiceServer
-	userApplication UserApplication
+	userApplication        UserApplication
+	verifyEmailApplication VerifyEmailApplication
 }
 
-func NewAuthServer(userApplication UserApplication) *AuthServer {
+func NewAuthServer(userApplication UserApplication, verVerifyEmailApplication VerifyEmailApplication) *AuthServer {
 	return &AuthServer{
-		userApplication: userApplication,
+		userApplication:        userApplication,
+		verifyEmailApplication: verVerifyEmailApplication,
 	}
 }
 
@@ -68,4 +70,18 @@ func (server *AuthServer) LoginUser(ctx context.Context, req *gen.LoginUserReque
 	}
 
 	return toLoginUserResponse(res), nil
+}
+
+func (server *AuthServer) VerifyEmail(ctx context.Context, req *gen.VerifyEmailRequest) (*gen.VerifyEmailResponse, error) {
+	res, err := server.verifyEmailApplication.VerifyEmail(ctx, toVerifyEmailApp(req))
+	if err != nil {
+		var valErr *domain.ValidationErrors
+		if errors.As(err, &valErr) {
+			return nil, invalidArgumentError(*valErr)
+		}
+		log.Error().Err(err).Msg("failed to verify email")
+		return nil, status.Errorf(codes.Internal, "failed to verify email: %s", err)
+	}
+
+	return toVerifyEmailResponse(res), nil
 }

@@ -64,3 +64,16 @@ func toLoginUserResponse(res *params.LoginUserAppResult) *gen.LoginUserResponse 
 		RefreshTokenExpiresAt: timestamppb.New(res.RefreshTokenExpiresAt),
 	}
 }
+
+func toVerifyEmailApp(req *gen.VerifyEmailRequest) params.VerifyEmailApp {
+	return params.VerifyEmailApp{
+		EmailId:    req.GetEmailId(),
+		SecretCode: req.GetSecretCode(),
+	}
+}
+
+func toVerifyEmailResponse(res *params.VerifyEmailAppResult) *gen.VerifyEmailResponse {
+	return &gen.VerifyEmailResponse{
+		IsVerified: res.User.IsEmailVerified,
+	}
+}

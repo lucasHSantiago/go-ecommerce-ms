@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func randomVerifyEmail(t *testing.T, user *domain.User) *domain.VerifyEmail {
+func randomVerifyEmail(user *domain.User) *domain.VerifyEmail {
 	return &domain.VerifyEmail{
 		ID:         1,
 		Username:   user.Username,
@@ -27,7 +27,7 @@ func randomVerifyEmail(t *testing.T, user *domain.User) *domain.VerifyEmail {
 
 func TestVerifyEmailUseCase(t *testing.T) {
 	user, _ := randomUser(t)
-	verifyEmail := randomVerifyEmail(t, user)
+	verifyEmail := randomVerifyEmail(user)
 
 	testCases := []struct {
 		name          string

@@ -19,41 +19,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func randomUser(t *testing.T) (*domain.User, string) {
-	t.Helper()
-
-	password := util.RandomString(6)
-	hashedPassword, err := util.HashPassword(password)
-	require.NoError(t, err)
-
-	user := domain.User{
-		Username:       util.RandomUsername(),
-		Role:           domain.UserRole,
-		HashedPassword: hashedPassword,
-		FullName:       util.RandomUsername(),
-		Email:          util.RandomEmail(),
-	}
-
-	return &user, password
-}
-
-func randomSession(t *testing.T, username string) *domain.Session {
-	t.Helper()
-
-	session := domain.Session{
-		ID:           uuid.New(),
-		Username:     username,
-		RefreshToken: "",
-		UserAgent:    "",
-		ClientIp:     "",
-		IsBlocked:    false,
-		ExpiresAt:    time.Now().Add(time.Minute),
-		CreatedAt:    time.Now().Add(-time.Minute),
-	}
-
-	return &session
-}
-
 func TestCreateUserAPI(t *testing.T) {
 	user, password := randomUser(t)
 
@@ -283,7 +248,7 @@ func TestCreateUserAPI(t *testing.T) {
 			tc.buildMocks(userRespository)
 
 			userApplication := application.NewUserApplication(userRespository, nil, nil, nil, nil)
-			server := NewAuthServer(userApplication)
+			server := NewAuthServer(userApplication, nil)
 
 			res, err := server.CreateUser(context.Background(), tc.req)
 			tc.checkResponse(t, res, err)
@@ -385,7 +350,7 @@ func TestUpdateUserAPI(t *testing.T) {
 			tc.buildMocks(userRespository)
 
 			userApplication := application.NewUserApplication(userRespository, nil, nil, nil, nil)
-			server := NewAuthServer(userApplication)
+			server := NewAuthServer(userApplication, nil)
 
 			res, err := server.UpdateUser(context.Background(), tc.req)
 			tc.checkResponse(t, res, err)
@@ -450,10 +415,110 @@ func TestLoginUserAPI(t *testing.T) {
 			require.NoError(t, err)
 
 			userApplication := application.NewUserApplication(userRespository, sessionRepository, nil, tokenMaker, &config)
-			server := NewAuthServer(userApplication)
+			server := NewAuthServer(userApplication, nil)
 
 			res, err := server.LoginUser(context.Background(), tc.req)
 			tc.checkResponse(t, res, err)
 		})
+	}
+}
+
+func TestVerifyEmailAPI(t *testing.T) {
+	user, _ := randomUser(t)
+	verifyEmail := randomVerifyEmail(user)
+
+	testCases := []struct {
+		name          string
+		req           *gen.VerifyEmailRequest
+		buildMocks    func(verifyEmailRepository *mockdb.MockVerifyEmailRepository)
+		checkResponse func(t *testing.T, res *gen.VerifyEmailResponse, err error)
+	}{
+		{
+			name: "OK",
+			req: &gen.VerifyEmailRequest{
+				EmailId:    verifyEmail.ID,
+				SecretCode: verifyEmail.SecretCode,
+			},
+			buildMocks: func(verifyEmailRepository *mockdb.MockVerifyEmailRepository) {
+				user.IsEmailVerified = true
+
+				txRes := params.VerifyEmailTxRepoResult{
+					User:        user,
+					VerifyEmail: verifyEmail,
+				}
+
+				verifyEmailRepository.EXPECT().
+					VerifyEmailTx(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(txRes, nil)
+			},
+			checkResponse: func(t *testing.T, res *gen.VerifyEmailResponse, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				require.True(t, res.IsVerified)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repositoryCtrl := gomock.NewController(t)
+			verifyEmailRepository := mockdb.NewMockVerifyEmailRepository(repositoryCtrl)
+
+			tc.buildMocks(verifyEmailRepository)
+
+			verifyEmailApplication := application.NewVerifyEmailApplication(verifyEmailRepository)
+			server := NewAuthServer(nil, verifyEmailApplication)
+
+			res, err := server.VerifyEmail(context.Background(), tc.req)
+			tc.checkResponse(t, res, err)
+		})
+	}
+}
+
+func randomUser(t *testing.T) (*domain.User, string) {
+	t.Helper()
+
+	password := util.RandomString(6)
+	hashedPassword, err := util.HashPassword(password)
+	require.NoError(t, err)
+
+	user := domain.User{
+		Username:       util.RandomUsername(),
+		Role:           domain.UserRole,
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomUsername(),
+		Email:          util.RandomEmail(),
+	}
+
+	return &user, password
+}
+
+func randomSession(t *testing.T, username string) *domain.Session {
+	t.Helper()
+
+	session := domain.Session{
+		ID:           uuid.New(),
+		Username:     username,
+		RefreshToken: "",
+		UserAgent:    "",
+		ClientIp:     "",
+		IsBlocked:    false,
+		ExpiresAt:    time.Now().Add(time.Minute),
+		CreatedAt:    time.Now().Add(-time.Minute),
+	}
+
+	return &session
+}
+
+func randomVerifyEmail(user *domain.User) *domain.VerifyEmail {
+	return &domain.VerifyEmail{
+		ID:         1,
+		Username:   user.Username,
+		Email:      user.Email,
+		SecretCode: util.RandomString(128),
+		IsUsed:     false,
+		CreatedAt:  time.Now(),
+		ExpiredAt:  time.Now().Add(time.Minute),
 	}
 }
