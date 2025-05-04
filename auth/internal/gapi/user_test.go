@@ -270,3 +270,105 @@ func TestCreateUserAPI(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateUserAPI(t *testing.T) {
+	user, _ := randomUser(t)
+
+	newName := util.RandomUsername()
+	newEmail := util.RandomEmail()
+	invalidEmail := "invalid-email"
+
+	testCases := []struct {
+		name          string
+		req           *gen.UpdateUserRequest
+		buildMocks    func(userRepository *mockdb.MockUserRepository)
+		checkResponse func(t *testing.T, res *gen.UpdateUserResponse, err error)
+	}{
+		{
+			name: "OK",
+			req: &gen.UpdateUserRequest{
+				Username: user.Username,
+				FullName: &newName,
+				Email:    &newEmail,
+			},
+			buildMocks: func(userRepository *mockdb.MockUserRepository) {
+				updatedUser := &domain.User{
+					Username:          user.Username,
+					HashedPassword:    user.HashedPassword,
+					FullName:          newName,
+					Email:             newEmail,
+					PasswordChangedAt: user.PasswordChangedAt,
+					CreatedAt:         user.CreatedAt,
+					IsEmailVerified:   user.IsEmailVerified,
+				}
+
+				userRepository.EXPECT().
+					UpdateUser(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(updatedUser, nil)
+			},
+			checkResponse: func(t *testing.T, res *gen.UpdateUserResponse, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				updatedUser := res.GetUser()
+				require.Equal(t, user.Username, updatedUser.Username)
+				require.Equal(t, newName, updatedUser.FullName)
+				require.Equal(t, newEmail, updatedUser.Email)
+			},
+		},
+		{
+			name: "UserNotFound",
+			req: &gen.UpdateUserRequest{
+				Username: user.Username,
+				FullName: &newName,
+				Email:    &newEmail,
+			},
+			buildMocks: func(userRepository *mockdb.MockUserRepository) {
+				userRepository.EXPECT().
+					UpdateUser(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(&domain.User{}, domain.ErrUserNotFound)
+			},
+			checkResponse: func(t *testing.T, res *gen.UpdateUserResponse, err error) {
+				require.Error(t, err)
+				st, ok := status.FromError(err)
+				require.True(t, ok)
+				require.Equal(t, codes.NotFound, st.Code())
+			},
+		},
+		{
+			name: "InvalidEmail",
+			req: &gen.UpdateUserRequest{
+				Username: user.Username,
+				FullName: &newName,
+				Email:    &invalidEmail,
+			},
+			buildMocks: func(userRepository *mockdb.MockUserRepository) {
+				userRepository.EXPECT().
+					UpdateUser(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(t *testing.T, res *gen.UpdateUserResponse, err error) {
+				require.Error(t, err)
+				st, ok := status.FromError(err)
+				require.True(t, ok)
+				require.Equal(t, codes.InvalidArgument, st.Code())
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repositoryCtrl := gomock.NewController(t)
+			userRespository := mockdb.NewMockUserRepository(repositoryCtrl)
+
+			tc.buildMocks(userRespository)
+
+			userApplication := application.NewUserApplication(userRespository, nil, nil, nil, nil)
+			server := newTestServer(t, userApplication)
+
+			res, err := server.UpdateUser(context.Background(), tc.req)
+			tc.checkResponse(t, res, err)
+		})
+	}
+}

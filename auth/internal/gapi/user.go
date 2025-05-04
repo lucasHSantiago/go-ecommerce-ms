@@ -32,6 +32,9 @@ func (server *Server) UpdateUser(ctx context.Context, req *gen.UpdateUserRequest
 		if errors.As(err, &valErr) {
 			return nil, invalidArgumentError(*valErr)
 		}
+		if errors.Is(err, domain.ErrUserNotFound) {
+			return nil, status.Errorf(codes.NotFound, "user not found")
+		}
 		log.Error().Err(err).Msg("failed to update user")
 		return nil, status.Errorf(codes.Internal, "failed to update user: %s", err)
 	}

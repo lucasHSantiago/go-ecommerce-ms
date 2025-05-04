@@ -10,7 +10,7 @@ import (
 )
 
 type Server struct {
-	gen.UnimplementedAuthServer
+	gen.UnimplementedAuthServiceServer
 	config          util.Config
 	userApplication UserApplication
 	tokenMaker      token.Maker
