@@ -65,7 +65,7 @@ func main() {
 
 func runGrpcServer(ctx context.Context, connPool *pgxpool.Pool, waitGroup *errgroup.Group, userRepository application.UserRepository, verifyEmailRepository application.VerifyEmailRepository, config util.Config) {
 	userApplication := newUserApplication(connPool, userRepository, &config)
-	verifyEmailApplication := newVerifyEmailApplication(connPool, verifyEmailRepository)
+	verifyEmailApplication := newVerifyEmailApplication(verifyEmailRepository)
 	server := gapi.NewAuthServer(userApplication, verifyEmailApplication)
 
 	grpcLogger := grpc.UnaryInterceptor(gapi.GrpcLogger)
@@ -143,6 +143,6 @@ func newUserApplication(connPool *pgxpool.Pool, userRepository application.UserR
 	return application.NewUserApplication(userRepository, sessionRepository, taskDistributor, tokenMaker, config)
 }
 
-func newVerifyEmailApplication(connPool *pgxpool.Pool, verifyEmailRepository application.VerifyEmailRepository) gapi.VerifyEmailApplication {
+func newVerifyEmailApplication(verifyEmailRepository application.VerifyEmailRepository) gapi.VerifyEmailApplication {
 	return application.NewVerifyEmailApplication(verifyEmailRepository)
 }
