@@ -2,7 +2,6 @@ package infra
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
@@ -63,8 +62,6 @@ func TestUpdateVerifyEmail(t *testing.T) {
 		ID:         verifyEmail.ID,
 		SecretCode: verifyEmail.SecretCode,
 	}
-
-	fmt.Print(arg.ID)
 
 	updatedVerifyEmail, err := repositories.VerifyEmail().UpdateVerifyEmail(context.Background(), arg)
 	require.NoError(t, err)

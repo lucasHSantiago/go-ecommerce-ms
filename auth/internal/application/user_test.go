@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/distributor"
@@ -19,76 +20,6 @@ import (
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 	"github.com/stretchr/testify/require"
 )
-
-type eqCreateUserParamsTxMatcher struct {
-	arg      params.CreateUserTxRepo
-	password string
-	user     domain.User
-}
-
-func (expected eqCreateUserParamsTxMatcher) Matches(x any) bool {
-	actualArg, ok := x.(params.CreateUserTxRepo)
-	if !ok {
-		return false
-	}
-
-	err := util.CheckPassword(expected.password, actualArg.HashedPassword)
-	if err != nil {
-		return false
-	}
-
-	expected.arg.HashedPassword = actualArg.HashedPassword
-	if !reflect.DeepEqual(expected.arg.CreateUserRepo, actualArg.CreateUserRepo) {
-		return false
-	}
-
-	err = actualArg.AfterCreate(expected.user)
-
-	return err == nil
-}
-
-func (e eqCreateUserParamsTxMatcher) String() string {
-	return fmt.Sprintf("matches arg %v and password %v", e.arg, e.password)
-}
-
-func EqCreateUserTxParams(arg params.CreateUserTxRepo, password string, user domain.User) gomock.Matcher {
-	return eqCreateUserParamsTxMatcher{arg, password, user}
-}
-
-func randomUser(t *testing.T) (*domain.User, string) {
-	t.Helper()
-
-	password := util.RandomString(6)
-	hashedPassword, err := util.HashPassword(password)
-	require.NoError(t, err)
-
-	user := domain.User{
-		Username:       util.RandomUsername(),
-		Role:           domain.UserRole,
-		HashedPassword: hashedPassword,
-		FullName:       util.RandomUsername(),
-		Email:          util.RandomEmail(),
-	}
-
-	return &user, password
-}
-
-func randomSession(t *testing.T, username string) *domain.Session {
-	t.Helper()
-
-	session := domain.Session{
-		ID:           uuid.New(),
-		Username:     username,
-		RefreshToken: "",
-		UserAgent:    "",
-		ClientIp:     "",
-		IsBlocked:    false,
-		ExpiresAt:    time.Now().Add(time.Minute),
-		CreatedAt:    time.Now().Add(-time.Minute),
-	}
-
-	return &session
-}
 
 func TestCreateUserUseCase(t *testing.T) {
 	user, password := randomUser(t)
@@ -157,7 +88,7 @@ func TestCreateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*domain.ValidationErrors)
+				_, ok := err.(validation.Errors)
 				require.True(t, ok)
 			},
 		},
@@ -180,7 +111,7 @@ func TestCreateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*domain.ValidationErrors)
+				_, ok := err.(validation.Errors)
 				require.True(t, ok)
 			},
 		},
@@ -203,7 +134,7 @@ func TestCreateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*domain.ValidationErrors)
+				_, ok := err.(validation.Errors)
 				require.True(t, ok)
 			},
 		},
@@ -226,7 +157,7 @@ func TestCreateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*domain.ValidationErrors)
+				_, ok := err.(validation.Errors)
 				require.True(t, ok)
 			},
 		},
@@ -249,7 +180,7 @@ func TestCreateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*domain.ValidationErrors)
+				_, ok := err.(validation.Errors)
 				require.True(t, ok)
 			},
 		},
@@ -272,7 +203,7 @@ func TestCreateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*domain.ValidationErrors)
+				_, ok := err.(validation.Errors)
 				require.True(t, ok)
 			},
 		},
@@ -295,7 +226,7 @@ func TestCreateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*domain.ValidationErrors)
+				_, ok := err.(validation.Errors)
 				require.True(t, ok)
 			},
 		},
@@ -408,7 +339,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*domain.ValidationErrors)
+				_, ok := err.(validation.Errors)
 				require.True(t, ok)
 			},
 		},
@@ -427,7 +358,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*domain.ValidationErrors)
+				_, ok := err.(validation.Errors)
 				require.True(t, ok)
 			},
 		},
@@ -446,7 +377,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*domain.ValidationErrors)
+				_, ok := err.(validation.Errors)
 				require.True(t, ok)
 			},
 		},
@@ -465,7 +396,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*domain.ValidationErrors)
+				_, ok := err.(validation.Errors)
 				require.True(t, ok)
 			},
 		},
@@ -484,7 +415,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*domain.ValidationErrors)
+				_, ok := err.(validation.Errors)
 				require.True(t, ok)
 			},
 		},
@@ -503,7 +434,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*domain.ValidationErrors)
+				_, ok := err.(validation.Errors)
 				require.True(t, ok)
 			},
 		},
@@ -522,7 +453,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, res *domain.User, err error) {
 				require.Error(t, err)
-				_, ok := err.(*domain.ValidationErrors)
+				_, ok := err.(validation.Errors)
 				require.True(t, ok)
 			},
 		},
@@ -635,7 +566,7 @@ func TestLoginUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, result *params.LoginUserAppResult, err error) {
 				require.Error(t, err)
-				_, ok := err.(*domain.ValidationErrors)
+				_, ok := err.(validation.Errors)
 				require.True(t, ok)
 			},
 		},
@@ -656,7 +587,7 @@ func TestLoginUserUseCase(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, result *params.LoginUserAppResult, err error) {
 				require.Error(t, err)
-				_, ok := err.(*domain.ValidationErrors)
+				_, ok := err.(validation.Errors)
 				require.True(t, ok)
 			},
 		},
@@ -686,4 +617,74 @@ func TestLoginUserUseCase(t *testing.T) {
 			tc.checkResponse(t, result, err)
 		})
 	}
+}
+
+type eqCreateUserParamsTxMatcher struct {
+	arg      params.CreateUserTxRepo
+	password string
+	user     domain.User
+}
+
+func (expected eqCreateUserParamsTxMatcher) Matches(x any) bool {
+	actualArg, ok := x.(params.CreateUserTxRepo)
+	if !ok {
+		return false
+	}
+
+	err := util.CheckPassword(expected.password, actualArg.HashedPassword)
+	if err != nil {
+		return false
+	}
+
+	expected.arg.HashedPassword = actualArg.HashedPassword
+	if !reflect.DeepEqual(expected.arg.CreateUserRepo, actualArg.CreateUserRepo) {
+		return false
+	}
+
+	err = actualArg.AfterCreate(expected.user)
+
+	return err == nil
+}
+
+func (e eqCreateUserParamsTxMatcher) String() string {
+	return fmt.Sprintf("matches arg %v and password %v", e.arg, e.password)
+}
+
+func EqCreateUserTxParams(arg params.CreateUserTxRepo, password string, user domain.User) gomock.Matcher {
+	return eqCreateUserParamsTxMatcher{arg, password, user}
+}
+
+func randomUser(t *testing.T) (*domain.User, string) {
+	t.Helper()
+
+	password := util.RandomString(6)
+	hashedPassword, err := util.HashPassword(password)
+	require.NoError(t, err)
+
+	user := domain.User{
+		Username:       util.RandomUsername(),
+		Role:           domain.UserRole,
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomUsername(),
+		Email:          util.RandomEmail(),
+	}
+
+	return &user, password
+}
+
+func randomSession(t *testing.T, username string) *domain.Session {
+	t.Helper()
+
+	session := domain.Session{
+		ID:           uuid.New(),
+		Username:     username,
+		RefreshToken: "",
+		UserAgent:    "",
+		ClientIp:     "",
+		IsBlocked:    false,
+		ExpiresAt:    time.Now().Add(time.Minute),
+		CreatedAt:    time.Now().Add(-time.Minute),
+	}
+
+	return &session
 }

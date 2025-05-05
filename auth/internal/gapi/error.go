@@ -1,24 +1,24 @@
 package gapi
 
 import (
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
+	validation "github.com/go-ozzo/ozzo-validation"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-func toBadRequestFieldValidation(validations domain.ValidationErrors) []*errdetails.BadRequest_FieldViolation {
+func toBadRequestFieldValidation(validations validation.Errors) []*errdetails.BadRequest_FieldViolation {
 	fieldViolations := make([]*errdetails.BadRequest_FieldViolation, 0, len(validations))
-	for _, v := range validations {
+	for field, err := range validations {
 		fieldViolations = append(fieldViolations, &errdetails.BadRequest_FieldViolation{
-			Field:       v.Field,
-			Description: v.Message,
+			Field:       field,
+			Description: err.Error(),
 		})
 	}
 	return fieldViolations
 }
 
-func invalidArgumentError(validations domain.ValidationErrors) error {
+func invalidArgumentError(validations validation.Errors) error {
 	badRequest := &errdetails.BadRequest{FieldViolations: toBadRequestFieldValidation(validations)}
 	statusInvalid := status.New(codes.InvalidArgument, "invalid parameters")
 

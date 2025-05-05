@@ -1,131 +1,67 @@
 package application
 
 import (
-	"fmt"
-	"net/mail"
 	"regexp"
 
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
+	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 )
 
 var (
-	isValidUsername = regexp.MustCompile(`^[a-z0-9_]+$`).MatchString
-	isValidFullName = regexp.MustCompile(`^[A-Za-z ]+$`).MatchString
+	isValidUsername = regexp.MustCompile(`^[a-z0-9_]+$`)
+	isValidFullName = regexp.MustCompile(`^[A-Za-z ]+$`)
 )
 
-func validateCreateUserParams(arg params.CreateUserApp) *domain.ValidationErrors {
-	var errs domain.ValidationErrors
-
-	if err := validateUsername(arg.Username); err != nil {
-		errs = append(errs, domain.NewFieldValidation("username", err))
-	}
-
-	if err := validatePassword(arg.Password); err != nil {
-		errs = append(errs, domain.NewFieldValidation("password", err))
-	}
-
-	if err := validateFullName(arg.FullName); err != nil {
-		errs = append(errs, domain.NewFieldValidation("full_name", err))
-	}
-
-	if err := validateEmail(arg.Email); err != nil {
-		errs = append(errs, domain.NewFieldValidation("email", err))
-	}
-
-	if len(errs) > 0 {
-		return &errs
-	}
-
-	return nil
+func validateCreateUserParams(arg params.CreateUserApp) error {
+	return validation.ValidateStruct(&arg,
+		validation.Field(&arg.Username, validateUsername()...),
+		validation.Field(&arg.Password, validatePassword()...),
+		validation.Field(&arg.FullName, validateFullName()...),
+		validation.Field(&arg.Email, validateEmail()...))
 }
 
-func validateUpdateUserParams(arg params.UpdateUserApp) *domain.ValidationErrors {
-	var errs domain.ValidationErrors
-
-	if err := validateUsername(arg.Username); err != nil {
-		errs = append(errs, domain.NewFieldValidation("username", err))
-	}
-
-	if arg.FullName != nil {
-		if err := validateFullName(*arg.FullName); err != nil {
-			errs = append(errs, domain.NewFieldValidation("full_name", err))
-		}
-	}
-
-	if arg.Password != nil {
-		if err := validatePassword(*arg.Password); err != nil {
-			errs = append(errs, domain.NewFieldValidation("password", err))
-		}
-	}
-
-	if arg.Email != nil {
-		if err := validateEmail(*arg.Email); err != nil {
-			errs = append(errs, domain.NewFieldValidation("email", err))
-		}
-	}
-
-	if len(errs) > 0 {
-		return &errs
-	}
-
-	return nil
+func validateUpdateUserParams(arg params.UpdateUserApp) error {
+	return validation.ValidateStruct(&arg,
+		validation.Field(&arg.Username, validateUsername()...),
+		validation.Field(&arg.FullName, validateFullName()...),
+		validation.Field(&arg.Password, validation.Length(6, 200), validation.NilOrNotEmpty),
+		validation.Field(&arg.Email, validateEmail()...))
 }
 
-func validateLoginUserParams(arg params.LoginUserApp) *domain.ValidationErrors {
-	var errs domain.ValidationErrors
-
-	if err := validateUsername(arg.Username); err != nil {
-		errs = append(errs, domain.NewFieldValidation("username", err))
-	}
-
-	if err := validatePassword(arg.Password); err != nil {
-		errs = append(errs, domain.NewFieldValidation("password", err))
-	}
-
-	if len(errs) > 0 {
-		return &errs
-	}
-
-	return nil
+func validateLoginUserParams(arg params.LoginUserApp) error {
+	return validation.ValidateStruct(&arg,
+		validation.Field(&arg.Username, validateUsername()...),
+		validation.Field(&arg.Password, validatePassword()...))
 }
 
-func validateUsername(value string) error {
-	if err := domain.ValidateString(value, 3, 100); err != nil {
-		return err
-	}
-
-	if !isValidUsername(value) {
-		return fmt.Errorf("must contain only letter, digits or underscores")
-	}
-
-	return nil
+func validateUsername() []validation.Rule {
+	rules := []validation.Rule{}
+	rules = append(rules, validation.Required)
+	rules = append(rules, validation.Length(3, 100))
+	rules = append(rules, validation.Match(isValidUsername).Error("must contain only letter, digits or underscores"))
+	return rules
 }
 
-func validateFullName(value string) error {
-	if err := domain.ValidateString(value, 3, 100); err != nil {
-		return err
-	}
-
-	if !isValidFullName(value) {
-		return fmt.Errorf("must contain only letter and spaces")
-	}
-
-	return nil
+func validateFullName() []validation.Rule {
+	rules := []validation.Rule{}
+	rules = append(rules, validation.Required)
+	rules = append(rules, validation.Length(3, 100))
+	rules = append(rules, validation.Match(isValidFullName).Error("must contain only letter and spaces"))
+	return rules
 }
 
-func validatePassword(value string) error {
-	return domain.ValidateString(value, 6, 100)
+func validatePassword() []validation.Rule {
+	rules := []validation.Rule{}
+	rules = append(rules, validation.Required)
+	rules = append(rules, validation.Length(6, 100))
+	return rules
 }
 
-func validateEmail(value string) error {
-	if err := domain.ValidateString(value, 3, 200); err != nil {
-		return err
-	}
-
-	if _, err := mail.ParseAddress(value); err != nil {
-		return fmt.Errorf("is not a valid email address")
-	}
-
-	return nil
+func validateEmail() []validation.Rule {
+	rules := []validation.Rule{}
+	rules = append(rules, validation.Required)
+	rules = append(rules, validation.Length(3, 200))
+	rules = append(rules, is.Email)
+	return rules
 }

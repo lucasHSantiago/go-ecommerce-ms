@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/golang/mock/gomock"
 	mockdb "github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/mock"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
@@ -78,7 +79,7 @@ func TestVerifyEmailUseCase(t *testing.T) {
 			checkResponse: func(t *testing.T, res *params.VerifyEmailAppResult, err error) {
 				require.Error(t, err)
 				require.Nil(t, res)
-				_, ok := err.(*domain.ValidationErrors)
+				_, ok := err.(validation.Errors)
 				require.True(t, ok)
 			},
 		},
@@ -96,7 +97,7 @@ func TestVerifyEmailUseCase(t *testing.T) {
 			checkResponse: func(t *testing.T, res *params.VerifyEmailAppResult, err error) {
 				require.Error(t, err)
 				require.Nil(t, res)
-				_, ok := err.(*domain.ValidationErrors)
+				_, ok := err.(validation.Errors)
 				require.True(t, ok)
 			},
 		},

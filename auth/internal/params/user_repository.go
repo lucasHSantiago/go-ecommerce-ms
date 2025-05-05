@@ -7,26 +7,26 @@ import (
 )
 
 type CreateUserRepo struct {
-	Username       string
-	HashedPassword string
-	FullName       string
-	Email          string
+	Username       string `json:"username"`
+	HashedPassword string `json:"hashed_password"`
+	FullName       string `json:"full_name"`
+	Email          string `json:"email"`
 }
 
 type UpdateUserRepo struct {
-	HashedPassword    *string
-	PasswordChangedAt *time.Time
-	FullName          *string
-	Email             *string
-	IsEmailVerified   *bool
-	Username          string
+	HashedPassword    *string    `json:"hashed_password"`
+	PasswordChangedAt *time.Time `json:"password_changed_at"`
+	FullName          *string    `json:"full_name"`
+	Email             *string    `json:"email"`
+	IsEmailVerified   *bool      `json:"is_email_verified"`
+	Username          string     `json:"username"`
 }
 
 type CreateUserTxRepo struct {
-	CreateUserRepo
-	AfterCreate func(user domain.User) error
+	CreateUserRepo `json:"create_user_repo"`
+	AfterCreate    func(user domain.User) error `json:"after_create"`
 }
 
 type CreateUserTxRepoResult struct {
-	User domain.User
+	User domain.User `json:"user"`
 }

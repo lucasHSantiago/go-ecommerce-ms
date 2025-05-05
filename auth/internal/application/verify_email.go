@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
+	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 )
 
@@ -39,32 +39,8 @@ func (v *VerifyEmailApplication) VerifyEmail(ctx context.Context, arg params.Ver
 	return response, nil
 }
 
-func validateVerifyEmailRequest(arg params.VerifyEmailApp) *domain.ValidationErrors {
-	var errs domain.ValidationErrors
-
-	if err := validateEmailId(arg.EmailId); err != nil {
-		errs = append(errs, domain.NewFieldValidation("email_id", err))
-	}
-
-	if err := validateSecretCode(arg.SecretCode); err != nil {
-		errs = append(errs, domain.NewFieldValidation("secret_code", err))
-	}
-
-	if len(errs) > 0 {
-		return &errs
-	}
-
-	return nil
-}
-
-func validateEmailId(value int64) error {
-	if value <= 0 {
-		return fmt.Errorf("must be a positive integer")
-	}
-
-	return nil
-}
-
-func validateSecretCode(value string) error {
-	return domain.ValidateString(value, 32, 128)
+func validateVerifyEmailRequest(arg params.VerifyEmailApp) error {
+	return validation.ValidateStruct(&arg,
+		validation.Field(&arg.EmailId, validation.Required),
+		validation.Field(&arg.SecretCode, validation.Required, validation.Length(32, 128)))
 }
