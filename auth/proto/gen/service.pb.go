@@ -7,6 +7,7 @@
 package gen
 
 import (
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -558,7 +559,7 @@ var File_service_proto protoreflect.FileDescriptor
 
 const file_service_proto_rawDesc = "" +
 	"\n" +
-	"\rservice.proto\x12\x03gen\x1a\x1fgoogle/protobuf/timestamp.proto\"\xdc\x01\n" +
+	"\rservice.proto\x12\x03gen\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xdc\x01\n" +
 	"\x04User\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x1b\n" +
 	"\tfull_name\x18\x02 \x01(\tR\bfullName\x12\x14\n" +
@@ -601,14 +602,14 @@ const file_service_proto_rawDesc = "" +
 	"secretCode\"6\n" +
 	"\x13VerifyEmailResponse\x12\x1f\n" +
 	"\vis_verified\x18\x01 \x01(\bR\n" +
-	"isVerified2\x89\x02\n" +
-	"\vAuthService\x12=\n" +
+	"isVerified2\xed\x02\n" +
+	"\vAuthService\x12R\n" +
 	"\n" +
-	"CreateUser\x12\x16.gen.CreateUserRequest\x1a\x17.gen.CreateUserResponse\x12=\n" +
+	"CreateUser\x12\x16.gen.CreateUserRequest\x1a\x17.gen.CreateUserResponse\"\x13\x82\xd3\xe4\x93\x02\r:\x01*\"\b/v1/user\x12R\n" +
 	"\n" +
-	"UpdateUser\x12\x16.gen.UpdateUserRequest\x1a\x17.gen.UpdateUserResponse\x12:\n" +
-	"\tLoginUser\x12\x15.gen.LoginUserRequest\x1a\x16.gen.LoginUserResponse\x12@\n" +
-	"\vVerifyEmail\x12\x17.gen.VerifyEmailRequest\x1a\x18.gen.VerifyEmailResponseB,Z*github.com/lucasHSantiago/gobank/proto/genb\x06proto3"
+	"UpdateUser\x12\x16.gen.UpdateUserRequest\x1a\x17.gen.UpdateUserResponse\"\x13\x82\xd3\xe4\x93\x02\r:\x01*2\b/v1/user\x12U\n" +
+	"\tLoginUser\x12\x15.gen.LoginUserRequest\x1a\x16.gen.LoginUserResponse\"\x19\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/v1/user/login\x12_\n" +
+	"\vVerifyEmail\x12\x17.gen.VerifyEmailRequest\x1a\x18.gen.VerifyEmailResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/user/verify-emailB,Z*github.com/lucasHSantiago/gobank/proto/genb\x06proto3"
 
 var (
 	file_service_proto_rawDescOnce sync.Once

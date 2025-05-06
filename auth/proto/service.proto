@@ -2,7 +2,9 @@ syntax = "proto3";
 
 package gen;
 
+import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
+import "google/rpc/error_details.proto";
 
 option go_package = "github.com/lucasHSantiago/gobank/proto/gen";
 
@@ -60,8 +62,25 @@ message VerifyEmailResponse {
 }
 
 service AuthService {
-  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
-  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
-  rpc LoginUser(LoginUserRequest) returns (LoginUserResponse);
-  rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse);
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
+    option (google.api.http) = {
+      post: "/v1/user"
+      body: "*"
+    };
+  }
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {
+    option (google.api.http) = {
+      patch: "/v1/user"
+      body: "*"
+    };
+  }
+  rpc LoginUser(LoginUserRequest) returns (LoginUserResponse) {
+    option (google.api.http) = {
+      post: "/v1/user/login"
+      body: "*"
+    };
+  }
+  rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse) {
+    option (google.api.http) = {get: "/v1/user/verify-email"};
+  }
 }
