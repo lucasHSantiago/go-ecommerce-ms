@@ -5,7 +5,9 @@ import (
 )
 
 type Config struct {
-	AuthAddress string `mapstructure:"AUTH_ADDRESS"`
+	AuthAddress   string `mapstructure:"AUTH_ADDRESS"`
+	Environment   string `mapstructure:"ENVIRONMENT"`
+	ServerAddress string `mapstructure:"SERVER_ADDRESS"`
 }
 
 func LoadConfig(path string) (Config, error) {
