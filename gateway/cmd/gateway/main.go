@@ -56,7 +56,7 @@ func startServer(ctx context.Context, waitGroup *errgroup.Group, config util.Con
 
 	srv := &http.Server{
 		Addr:    config.ServerAddress,
-		Handler: middleware.AllowCors(mux),
+		Handler: middleware.AllowCors(middleware.Logger(mux)),
 	}
 
 	waitGroup.Go(func() error {
