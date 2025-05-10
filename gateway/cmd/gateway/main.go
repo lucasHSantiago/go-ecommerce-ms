@@ -54,9 +54,11 @@ func startServer(ctx context.Context, waitGroup *errgroup.Group, config util.Con
 	mux := http.NewServeMux()
 	mux.Handle("/", gw)
 
+	middleware := middleware.NewMiddleware(config)
+
 	srv := &http.Server{
 		Addr:    config.ServerAddress,
-		Handler: middleware.RecoverPanic(middleware.AllowCors(middleware.Logger(mux))),
+		Handler: middleware.RecoverPanic(middleware.AllowCors(middleware.Logger(middleware.RateLimit(mux)))),
 	}
 
 	waitGroup.Go(func() error {

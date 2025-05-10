@@ -6,12 +6,12 @@ import (
 	"strings"
 )
 
-func AllowCors(next http.Handler) http.Handler {
+func (m *Middleware) AllowCors(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if origin := r.Header.Get("Origin"); origin != "" {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			if r.Method == "OPTIONS" && r.Header.Get("Access-Control-Request-Method") != "" {
-				preflightHandler(w, r)
+				m.preflightHandler(w, r)
 
 				return
 			}
@@ -20,7 +20,7 @@ func AllowCors(next http.Handler) http.Handler {
 	})
 }
 
-func preflightHandler(w http.ResponseWriter, r *http.Request) {
+func (m *Middleware) preflightHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	headers := []string{"*"}

@@ -7,7 +7,7 @@ import (
 	"github.com/lucasHSantiago/go-ecommerce-ms/gateway/internal/util"
 )
 
-func RecoverPanic(next http.Handler) http.Handler {
+func (m *Middleware) RecoverPanic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
