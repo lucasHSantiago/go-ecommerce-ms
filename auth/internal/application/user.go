@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/distributor"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
@@ -13,6 +14,18 @@ import (
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/pkg/token"
 	"github.com/rs/zerolog/log"
 )
+
+type UserRepository interface {
+	CreateUser(ctx context.Context, arg params.CreateUserRepo) (*domain.User, error)
+	CreateUserTx(ctx context.Context, arg params.CreateUserTxRepo) (params.CreateUserTxRepoResult, error)
+	GetUser(ctx context.Context, username string) (*domain.User, error)
+	UpdateUser(ctx context.Context, arg params.UpdateUserRepo) (*domain.User, error)
+}
+
+type SessionRepository interface {
+	CreateSession(ctx context.Context, arg params.CreateSessionRepo) (*domain.Session, error)
+	GetSession(ctx context.Context, id uuid.UUID) (*domain.Session, error)
+}
 
 type JwtTokenMaker interface {
 	CreateToken(username string, role string, duration time.Duration) (string, *token.Payload, error)

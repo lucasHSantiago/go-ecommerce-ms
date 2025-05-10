@@ -8,6 +8,12 @@ import (
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 )
 
+type VerifyEmailRepository interface {
+	CreateVerifyEmail(ctx context.Context, arg params.CreateVerifyEmailRepo) (*domain.VerifyEmail, error)
+	UpdateVerifyEmail(ctx context.Context, arg params.UpdateVerifyEmailRepo) (*domain.VerifyEmail, error)
+	VerifyEmailTx(ctx context.Context, arg params.VerifyEmailTxRepo) (params.VerifyEmailTxRepoResult, error)
+}
+
 type VerifyEmailApplication struct {
 	verifyEmailRepository VerifyEmailRepository
 }

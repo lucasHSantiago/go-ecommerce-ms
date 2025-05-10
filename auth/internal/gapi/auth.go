@@ -7,11 +7,22 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/proto/gen"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+type UserApplication interface {
+	Create(ctx context.Context, arg params.CreateUserApp) (*domain.User, error)
+	Update(ctx context.Context, arg params.UpdateUserApp) (*domain.User, error)
+	Login(ctx context.Context, arg params.LoginUserApp) (*params.LoginUserAppResult, error)
+}
+
+type VerifyEmailApplication interface {
+	VerifyEmail(ctx context.Context, arg params.VerifyEmailApp) (*params.VerifyEmailAppResult, error)
+}
 
 type AuthServer struct {
 	gen.UnimplementedAuthServiceServer
