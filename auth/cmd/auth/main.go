@@ -20,9 +20,9 @@ import (
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/gapi"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/infra"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/mail"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/token"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/worker"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/pkg/token"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/proto/gen"
 )
 
@@ -127,7 +127,7 @@ func runTaskProcessor(ctx context.Context, waitGroup *errgroup.Group, userReposi
 }
 
 func newUserApplication(connPool *pgxpool.Pool, userRepository application.UserRepository, config *util.Config) gapi.UserApplication {
-	tokenMaker, err := token.NewJWTMaker(config.TokenSecretKey)
+	tokenMaker, err := token.NewJwtToken(config.TokenSecretKey)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create token maker")
 	}

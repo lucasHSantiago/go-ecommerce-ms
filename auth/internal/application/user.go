@@ -9,20 +9,24 @@ import (
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/distributor"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/token"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/pkg/token"
 	"github.com/rs/zerolog/log"
 )
+
+type JwtTokenMaker interface {
+	CreateToken(username string, role string, duration time.Duration) (string, *token.Payload, error)
+}
 
 type UserApplication struct {
 	userRepository     UserRepository
 	sessionRespository SessionRepository
 	taskDistributor    TaskDistributor
-	tokenMaker         token.Maker
+	tokenMaker         JwtTokenMaker
 	config             *util.Config
 }
 
-func NewUserApplication(userRepository UserRepository, sessionRepository SessionRepository, taskDistributor TaskDistributor, tokenMaker token.Maker, config *util.Config) *UserApplication {
+func NewUserApplication(userRepository UserRepository, sessionRepository SessionRepository, taskDistributor TaskDistributor, tokenMaker JwtTokenMaker, config *util.Config) *UserApplication {
 	return &UserApplication{
 		userRepository:     userRepository,
 		sessionRespository: sessionRepository,

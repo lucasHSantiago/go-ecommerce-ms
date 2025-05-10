@@ -16,8 +16,8 @@ import (
 	mockdb "github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/mock"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/token"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/pkg/token"
 	"github.com/stretchr/testify/require"
 )
 
@@ -603,7 +603,7 @@ func TestLoginUserUseCase(t *testing.T) {
 
 			tc.buildMocks(userRepository, sessionRepository)
 
-			tokenMaker, err := token.NewJWTMaker(util.RandomString(32))
+			tokenMaker, err := token.NewJwtToken(util.RandomString(32))
 			require.NoError(t, err)
 
 			config := util.Config{
