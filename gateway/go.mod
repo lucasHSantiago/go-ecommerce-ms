@@ -5,6 +5,7 @@ go 1.24.0
 tool github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
 
 require (
+	github.com/go-chi/chi v1.5.5
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3
 	github.com/lucasHSantiago/go-ecommerce-ms/auth v0.0.0-20250511002938-d7922113209d
 	github.com/prometheus/client_golang v1.22.0

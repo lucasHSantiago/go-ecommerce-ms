@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/go-chi/chi"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/pkg/token"
 	"github.com/lucasHSantiago/go-ecommerce-ms/gateway/internal/gateway"
 	"github.com/lucasHSantiago/go-ecommerce-ms/gateway/internal/middleware"
@@ -60,21 +61,30 @@ func startServer(ctx context.Context, waitGroup *errgroup.Group, config util.Con
 		log.Fatal().Err(err).Msg("cannot create gateway")
 	}
 
-	mux := http.NewServeMux()
-	mux.Handle("/", gw)
-
 	jwtToken, err := token.NewJwtToken(config.TokenSecret)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot initiate jwt token")
 	}
 
-	mux.Handle("/metrics", promhttp.Handler())
-
 	middleware := middleware.NewMiddleware(config, settings, jwtToken)
+
+	routes := chi.NewRouter()
+	routes.Get("/metrics", promhttp.Handler().ServeHTTP)
+
+	routes.With(
+		middleware.RecoverPanic,
+		middleware.Metric,
+		middleware.AllowCors,
+		middleware.Logger,
+		middleware.RateLimit,
+		middleware.Authenticate,
+	).Route("/", func(r chi.Router) {
+		r.Mount("/", gw)
+	})
 
 	srv := &http.Server{
 		Addr:    config.ServerAddress,
-		Handler: middleware.RecoverPanic(middleware.Metric(middleware.AllowCors(middleware.Logger(middleware.RateLimit(middleware.Authenticate(mux)))))),
+		Handler: routes,
 	}
 
 	waitGroup.Go(func() error {
