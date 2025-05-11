@@ -50,3 +50,17 @@ func RateLimitExceededResponse(w http.ResponseWriter, r *http.Request) {
 	message := "rate limit exceeded"
 	ErrorResponse(w, r, http.StatusTooManyRequests, message)
 }
+
+func InvalidAuthenticationTokenResponse(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("WWW-Authenticate", "Bearer")
+
+	message := "invalid or missing authenticate token"
+	ErrorResponse(w, r, http.StatusUnauthorized, message)
+}
+
+func UnauthorizedResponse(w http.ResponseWriter, r *http.Request) {
+	log.Error().Msg("rate limit exceeded")
+
+	message := "unauthorized request"
+	ErrorResponse(w, r, http.StatusUnauthorized, message)
+}

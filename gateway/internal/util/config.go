@@ -5,12 +5,12 @@ import (
 )
 
 type Config struct {
-	AuthAddress     string `mapstructure:"AUTH_ADDRESS"`
 	Environment     string `mapstructure:"ENVIRONMENT"`
 	ServerAddress   string `mapstructure:"SERVER_ADDRESS"`
 	RateLimitEnable bool   `mapstructure:"RATE_LIMIT_ENABLE"`
 	RateLimitRps    int    `mapstructure:"RATE_LIMIT_RPS"`
 	RateLimitBurst  int    `mapstructure:"RATE_LIMIT_BURST"`
+	TokenSecret     string `mapstructure:"TOKEN_SECRET_KEY"`
 }
 
 func LoadConfig(path string) (Config, error) {

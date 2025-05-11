@@ -23,9 +23,9 @@ func validateCreateUserParams(arg CreateUser) error {
 func validateUpdateUserParams(arg UpdateUser) error {
 	return validation.ValidateStruct(&arg,
 		validation.Field(&arg.Username, validateUsername()...),
-		validation.Field(&arg.FullName, validateFullName()...),
+		validation.Field(&arg.FullName, validation.Length(3, 100), validation.Match(isValidFullName).Error("must contain only letter and spaces"), validation.NilOrNotEmpty),
 		validation.Field(&arg.Password, validation.Length(6, 200), validation.NilOrNotEmpty),
-		validation.Field(&arg.Email, validateEmail()...))
+		validation.Field(&arg.Email, validation.Length(3, 200), is.Email, validation.NilOrNotEmpty))
 }
 
 func validateLoginUserParams(arg LoginUser) error {

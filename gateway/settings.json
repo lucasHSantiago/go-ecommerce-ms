@@ -1,0 +1,15 @@
+{
+    "services": [
+        {
+            "name": "Auth",
+            "url": "localhost:8080",
+            "acl": [
+                {
+                    "http": "PATCH",
+                    "route": "user",
+                    "roles": []
+                }
+            ]
+        }
+    ]
+}

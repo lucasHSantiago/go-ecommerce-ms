@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/pkg/token"
 	"github.com/lucasHSantiago/go-ecommerce-ms/gateway/internal/gateway"
 	"github.com/lucasHSantiago/go-ecommerce-ms/gateway/internal/middleware"
 	"github.com/lucasHSantiago/go-ecommerce-ms/gateway/internal/util"
@@ -46,7 +47,7 @@ func main() {
 }
 
 func startServer(ctx context.Context, waitGroup *errgroup.Group, config util.Config) {
-	gw, err := gateway.NewGateway(context.Background(), config)
+	gw, settings, err := gateway.NewGateway(context.Background())
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create gateway")
 	}
@@ -54,15 +55,20 @@ func startServer(ctx context.Context, waitGroup *errgroup.Group, config util.Con
 	mux := http.NewServeMux()
 	mux.Handle("/", gw)
 
-	middleware := middleware.NewMiddleware(config)
+	jwtToken, err := token.NewJwtToken(config.TokenSecret)
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot initiate jwt token")
+	}
+
+	middleware := middleware.NewMiddleware(config, settings, jwtToken)
 
 	srv := &http.Server{
 		Addr:    config.ServerAddress,
-		Handler: middleware.RecoverPanic(middleware.AllowCors(middleware.Logger(middleware.RateLimit(mux)))),
+		Handler: middleware.RecoverPanic(middleware.AllowCors(middleware.Logger(middleware.RateLimit(middleware.Authenticate(mux))))),
 	}
 
 	waitGroup.Go(func() error {
-		log.Info().Msgf("start gateway server at %s\n", config.ServerAddress)
+		log.Info().Msgf("start gateway server at %s", config.ServerAddress)
 		err = srv.ListenAndServe()
 		if err != nil {
 			if errors.Is(err, http.ErrServerClosed) {
