@@ -9,21 +9,21 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/distributor"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/infra"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/pkg/token"
 	"github.com/rs/zerolog/log"
 )
 
 type UserRepository interface {
-	CreateUser(ctx context.Context, arg params.CreateUserRepo) (*domain.User, error)
-	CreateUserTx(ctx context.Context, arg params.CreateUserTxRepo) (params.CreateUserTxRepoResult, error)
+	CreateUser(ctx context.Context, arg infra.CreateUser) (*domain.User, error)
+	CreateUserTx(ctx context.Context, arg infra.CreateUserTx) (infra.CreateUserTxResult, error)
 	GetUser(ctx context.Context, username string) (*domain.User, error)
-	UpdateUser(ctx context.Context, arg params.UpdateUserRepo) (*domain.User, error)
+	UpdateUser(ctx context.Context, arg infra.UpdateUser) (*domain.User, error)
 }
 
 type SessionRepository interface {
-	CreateSession(ctx context.Context, arg params.CreateSessionRepo) (*domain.Session, error)
+	CreateSession(ctx context.Context, arg infra.CreateSession) (*domain.Session, error)
 	GetSession(ctx context.Context, id uuid.UUID) (*domain.Session, error)
 }
 
@@ -49,7 +49,14 @@ func NewUserApplication(userRepository UserRepository, sessionRepository Session
 	}
 }
 
-func (u *UserApplication) Create(ctx context.Context, arg params.CreateUserApp) (*domain.User, error) {
+type CreateUser struct {
+	Username string `json:"username"`
+	FullName string `json:"full_name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (u *UserApplication) Create(ctx context.Context, arg CreateUser) (*domain.User, error) {
 	if errValidation := validateCreateUserParams(arg); errValidation != nil {
 		return nil, errValidation
 	}
@@ -60,8 +67,8 @@ func (u *UserApplication) Create(ctx context.Context, arg params.CreateUserApp) 
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	argTx := params.CreateUserTxRepo{
-		CreateUserRepo: params.CreateUserRepo{
+	argTx := infra.CreateUserTx{
+		CreateUser: infra.CreateUser{
 			Username:       arg.Username,
 			HashedPassword: hashedPassword,
 			FullName:       arg.FullName,
@@ -90,12 +97,19 @@ func (u *UserApplication) Create(ctx context.Context, arg params.CreateUserApp) 
 	return &res.User, nil
 }
 
-func (u *UserApplication) Update(ctx context.Context, arg params.UpdateUserApp) (*domain.User, error) {
+type UpdateUser struct {
+	Username string  `json:"username"`
+	FullName *string `json:"full_name"`
+	Email    *string `json:"email"`
+	Password *string `json:"password"`
+}
+
+func (u *UserApplication) Update(ctx context.Context, arg UpdateUser) (*domain.User, error) {
 	if errValidation := validateUpdateUserParams(arg); errValidation != nil {
 		return nil, errValidation
 	}
 
-	updateUserParams := params.UpdateUserRepo{
+	updateUserParams := infra.UpdateUser{
 		FullName: arg.FullName,
 		Username: arg.Username,
 		Email:    arg.Email,
@@ -122,7 +136,21 @@ func (u *UserApplication) Update(ctx context.Context, arg params.UpdateUserApp) 
 	return user, nil
 }
 
-func (u *UserApplication) Login(ctx context.Context, arg params.LoginUserApp) (*params.LoginUserAppResult, error) {
+type LoginUser struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type LoginUserResult struct {
+	User                  *domain.User `json:"user"`
+	SessionId             uuid.UUID    `json:"session_id"`
+	AccessToken           string       `json:"access_token"`
+	RefreshToken          string       `json:"refresh_token"`
+	AccessTokenExpiresAt  time.Time    `json:"access_token_expires_at"`
+	RefreshTokenExpiresAt time.Time    `json:"refresh_token_expires_at"`
+}
+
+func (u *UserApplication) Login(ctx context.Context, arg LoginUser) (*LoginUserResult, error) {
 	if errValidation := validateLoginUserParams(arg); errValidation != nil {
 		return nil, errValidation
 	}
@@ -149,7 +177,7 @@ func (u *UserApplication) Login(ctx context.Context, arg params.LoginUserApp) (*
 	}
 
 	metadata := util.ExtractMetadata(ctx)
-	session, err := u.sessionRespository.CreateSession(ctx, params.CreateSessionRepo{
+	session, err := u.sessionRespository.CreateSession(ctx, infra.CreateSession{
 		ID:           refreshPayload.ID,
 		Username:     user.Username,
 		RefreshToken: refreshToken,
@@ -162,7 +190,7 @@ func (u *UserApplication) Login(ctx context.Context, arg params.LoginUserApp) (*
 		return nil, err
 	}
 
-	response := &params.LoginUserAppResult{
+	response := &LoginUserResult{
 		User:                  user,
 		SessionId:             session.ID,
 		AccessToken:           accessToken,

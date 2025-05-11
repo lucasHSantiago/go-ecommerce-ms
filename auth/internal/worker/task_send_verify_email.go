@@ -8,7 +8,7 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/distributor"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/infra"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 	"github.com/rs/zerolog/log"
 )
@@ -59,7 +59,7 @@ func (r *RedisTaskProcessor) ProcessTaskSendVerifyEmail(ctx context.Context, tas
 		return fmt.Errorf("failed to get user: %w", err)
 	}
 
-	verifyEmail, err := r.verifyEmailRepository.CreateVerifyEmail(ctx, params.CreateVerifyEmailRepo{
+	verifyEmail, err := r.verifyEmailRepository.CreateVerifyEmail(ctx, infra.CreateVerifyEmail{
 		Username:   user.Username,
 		Email:      user.Email,
 		SecretCode: util.RandomString(32),

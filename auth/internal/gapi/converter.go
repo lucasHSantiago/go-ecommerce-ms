@@ -1,8 +1,8 @@
 package gapi
 
 import (
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/proto/gen"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -17,8 +17,8 @@ func toUserResponse(user *domain.User) *gen.User {
 	}
 }
 
-func toCreateUserApp(req *gen.CreateUserRequest) params.CreateUserApp {
-	return params.CreateUserApp{
+func toCreateUserApp(req *gen.CreateUserRequest) application.CreateUser {
+	return application.CreateUser{
 		Username: req.GetUsername(),
 		FullName: req.GetFullName(),
 		Email:    req.GetEmail(),
@@ -32,8 +32,8 @@ func toCreateUserResponse(user *domain.User) *gen.CreateUserResponse {
 	}
 }
 
-func toUpdateUserApp(req *gen.UpdateUserRequest) params.UpdateUserApp {
-	return params.UpdateUserApp{
+func toUpdateUserApp(req *gen.UpdateUserRequest) application.UpdateUser {
+	return application.UpdateUser{
 		Username: req.GetUsername(),
 		FullName: req.FullName,
 		Email:    req.Email,
@@ -47,14 +47,14 @@ func toUpdateUserResponse(user *domain.User) *gen.UpdateUserResponse {
 	}
 }
 
-func toLoginUserApp(req *gen.LoginUserRequest) params.LoginUserApp {
-	return params.LoginUserApp{
+func toLoginUserApp(req *gen.LoginUserRequest) application.LoginUser {
+	return application.LoginUser{
 		Username: req.Username,
 		Password: req.Password,
 	}
 }
 
-func toLoginUserResponse(res *params.LoginUserAppResult) *gen.LoginUserResponse {
+func toLoginUserResponse(res *application.LoginUserResult) *gen.LoginUserResponse {
 	return &gen.LoginUserResponse{
 		User:                  toUserResponse(res.User),
 		SessionId:             res.SessionId.String(),
@@ -65,14 +65,14 @@ func toLoginUserResponse(res *params.LoginUserAppResult) *gen.LoginUserResponse 
 	}
 }
 
-func toVerifyEmailApp(req *gen.VerifyEmailRequest) params.VerifyEmailApp {
-	return params.VerifyEmailApp{
+func toVerifyEmailApp(req *gen.VerifyEmailRequest) application.VerifyEmail {
+	return application.VerifyEmail{
 		EmailId:    req.GetEmailId(),
 		SecretCode: req.GetSecretCode(),
 	}
 }
 
-func toVerifyEmailResponse(res *params.VerifyEmailAppResult) *gen.VerifyEmailResponse {
+func toVerifyEmailResponse(res *application.VerifyEmailResult) *gen.VerifyEmailResponse {
 	return &gen.VerifyEmailResponse{
 		IsVerified: res.User.IsEmailVerified,
 	}

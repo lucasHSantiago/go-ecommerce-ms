@@ -3,11 +3,11 @@ package infra
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 	"github.com/rs/zerolog/log"
 )
 
@@ -51,7 +51,17 @@ INSERT INTO sessions (
 ) RETURNING id, username, refresh_token, user_agent, client_ip, is_blocked, expires_at, created_at
 `
 
-func (s *SessionRepository) CreateSession(ctx context.Context, arg params.CreateSessionRepo) (*domain.Session, error) {
+type CreateSession struct {
+	ID           uuid.UUID `json:"id"`
+	Username     string    `json:"username"`
+	RefreshToken string    `json:"refresh_token"`
+	UserAgent    string    `json:"user_agent"`
+	ClientIp     string    `json:"client_ip"`
+	IsBlocked    bool      `json:"is_blocked"`
+	ExpiresAt    time.Time `json:"expires_at"`
+}
+
+func (s *SessionRepository) CreateSession(ctx context.Context, arg CreateSession) (*domain.Session, error) {
 	args := []any{
 		arg.ID,
 		arg.Username,

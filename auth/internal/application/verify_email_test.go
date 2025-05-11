@@ -9,7 +9,7 @@ import (
 	"github.com/golang/mock/gomock"
 	mockdb "github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/mock"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/infra"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 	"github.com/stretchr/testify/require"
 )
@@ -32,23 +32,23 @@ func TestVerifyEmailUseCase(t *testing.T) {
 
 	testCases := []struct {
 		name          string
-		arg           params.VerifyEmailApp
-		buildMocks    func(arg params.VerifyEmailApp, verifyEmailRepository *mockdb.MockVerifyEmailRepository)
-		checkResponse func(t *testing.T, res *params.VerifyEmailAppResult, err error)
+		arg           VerifyEmail
+		buildMocks    func(arg VerifyEmail, verifyEmailRepository *mockdb.MockVerifyEmailRepository)
+		checkResponse func(t *testing.T, res *VerifyEmailResult, err error)
 	}{
 		{
 			name: "OK",
-			arg: params.VerifyEmailApp{
+			arg: VerifyEmail{
 				EmailId:    verifyEmail.ID,
 				SecretCode: verifyEmail.SecretCode,
 			},
-			buildMocks: func(arg params.VerifyEmailApp, verifyEmailRepository *mockdb.MockVerifyEmailRepository) {
-				txArg := params.VerifyEmailTxRepo{
+			buildMocks: func(arg VerifyEmail, verifyEmailRepository *mockdb.MockVerifyEmailRepository) {
+				txArg := infra.VerifyEmailTx{
 					EmailId:     arg.EmailId,
 					SecreteCode: arg.SecretCode,
 				}
 
-				txRes := params.VerifyEmailTxRepoResult{
+				txRes := infra.VerifyEmailTxResult{
 					User:        user,
 					VerifyEmail: verifyEmail,
 				}
@@ -58,7 +58,7 @@ func TestVerifyEmailUseCase(t *testing.T) {
 					Times(1).
 					Return(txRes, nil)
 			},
-			checkResponse: func(t *testing.T, res *params.VerifyEmailAppResult, err error) {
+			checkResponse: func(t *testing.T, res *VerifyEmailResult, err error) {
 				require.NoError(t, err)
 				require.NotNil(t, res)
 				require.Equal(t, res.User.Username, user.Username)
@@ -67,16 +67,16 @@ func TestVerifyEmailUseCase(t *testing.T) {
 		},
 		{
 			name: "RequiredId",
-			arg: params.VerifyEmailApp{
+			arg: VerifyEmail{
 				EmailId:    0,
 				SecretCode: verifyEmail.SecretCode,
 			},
-			buildMocks: func(arg params.VerifyEmailApp, verifyEmailRepository *mockdb.MockVerifyEmailRepository) {
+			buildMocks: func(arg VerifyEmail, verifyEmailRepository *mockdb.MockVerifyEmailRepository) {
 				verifyEmailRepository.EXPECT().
 					VerifyEmailTx(gomock.Any(), gomock.Any()).
 					Times(0)
 			},
-			checkResponse: func(t *testing.T, res *params.VerifyEmailAppResult, err error) {
+			checkResponse: func(t *testing.T, res *VerifyEmailResult, err error) {
 				require.Error(t, err)
 				require.Nil(t, res)
 				_, ok := err.(validation.Errors)
@@ -85,16 +85,16 @@ func TestVerifyEmailUseCase(t *testing.T) {
 		},
 		{
 			name: "InvalidSecretCode",
-			arg: params.VerifyEmailApp{
+			arg: VerifyEmail{
 				EmailId:    verifyEmail.ID,
 				SecretCode: "invalid",
 			},
-			buildMocks: func(arg params.VerifyEmailApp, verifyEmailRepository *mockdb.MockVerifyEmailRepository) {
+			buildMocks: func(arg VerifyEmail, verifyEmailRepository *mockdb.MockVerifyEmailRepository) {
 				verifyEmailRepository.EXPECT().
 					VerifyEmailTx(gomock.Any(), gomock.Any()).
 					Times(0)
 			},
-			checkResponse: func(t *testing.T, res *params.VerifyEmailAppResult, err error) {
+			checkResponse: func(t *testing.T, res *VerifyEmailResult, err error) {
 				require.Error(t, err)
 				require.Nil(t, res)
 				_, ok := err.(validation.Errors)

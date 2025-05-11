@@ -5,7 +5,6 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 	"github.com/rs/zerolog/log"
 )
 
@@ -41,7 +40,13 @@ INSERT INTO "verify_emails" (
 ) RETURNING id, username, email, secret_code, is_used, created_at, expired_at
 `
 
-func (v *VerifyEmailRepository) CreateVerifyEmail(ctx context.Context, arg params.CreateVerifyEmailRepo) (*domain.VerifyEmail, error) {
+type CreateVerifyEmail struct {
+	Username   string `json:"username"`
+	Email      string `json:"email"`
+	SecretCode string `json:"secret_code"`
+}
+
+func (v *VerifyEmailRepository) CreateVerifyEmail(ctx context.Context, arg CreateVerifyEmail) (*domain.VerifyEmail, error) {
 	args := []any{
 		arg.Username,
 		arg.Email,
@@ -68,7 +73,12 @@ AND expired_at > now()
 RETURNING id, username, email, secret_code, is_used, created_at, expired_at
 `
 
-func (v *VerifyEmailRepository) UpdateVerifyEmail(ctx context.Context, arg params.UpdateVerifyEmailRepo) (*domain.VerifyEmail, error) {
+type UpdateVerifyEmail struct {
+	ID         int64  `json:"id"`
+	SecretCode string `json:"secret_code"`
+}
+
+func (v *VerifyEmailRepository) UpdateVerifyEmail(ctx context.Context, arg UpdateVerifyEmail) (*domain.VerifyEmail, error) {
 	args := []any{
 		arg.ID,
 		arg.SecretCode,
@@ -84,14 +94,24 @@ func (v *VerifyEmailRepository) UpdateVerifyEmail(ctx context.Context, arg param
 	return verifyEmail, nil
 }
 
-func (v *VerifyEmailRepository) VerifyEmailTx(ctx context.Context, arg params.VerifyEmailTxRepo) (params.VerifyEmailTxRepoResult, error) {
-	var result params.VerifyEmailTxRepoResult
+type VerifyEmailTx struct {
+	EmailId     int64  `json:"email_id"`
+	SecreteCode string `json:"secrete_code"`
+}
+
+type VerifyEmailTxResult struct {
+	User        *domain.User        `json:"user"`
+	VerifyEmail *domain.VerifyEmail `json:"verify_email"`
+}
+
+func (v *VerifyEmailRepository) VerifyEmailTx(ctx context.Context, arg VerifyEmailTx) (VerifyEmailTxResult, error) {
+	var result VerifyEmailTxResult
 
 	err := execTx(ctx, v.connPool, func(tx pgx.Tx) error {
 		var err error
 
 		verifyEmailRepository := NewVerifyEmailRepository(tx)
-		result.VerifyEmail, err = verifyEmailRepository.UpdateVerifyEmail(ctx, params.UpdateVerifyEmailRepo{
+		result.VerifyEmail, err = verifyEmailRepository.UpdateVerifyEmail(ctx, UpdateVerifyEmail{
 			ID:         arg.EmailId,
 			SecretCode: arg.SecreteCode,
 		})
@@ -102,7 +122,7 @@ func (v *VerifyEmailRepository) VerifyEmailTx(ctx context.Context, arg params.Ve
 		isEmailVerified := true
 
 		userRepository := NewUserRepository(tx)
-		result.User, err = userRepository.UpdateUser(ctx, params.UpdateUserRepo{
+		result.User, err = userRepository.UpdateUser(ctx, UpdateUser{
 			Username:        result.VerifyEmail.Username,
 			IsEmailVerified: &isEmailVerified,
 		})

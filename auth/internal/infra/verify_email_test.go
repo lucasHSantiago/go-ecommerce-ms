@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +14,7 @@ func createRandomVerifyEmail(t *testing.T) domain.VerifyEmail {
 
 	user := createRandomUser(t)
 
-	arg := params.CreateVerifyEmailRepo{
+	arg := CreateVerifyEmail{
 		Username:   user.Username,
 		Email:      user.Email,
 		SecretCode: util.RandomString(32),
@@ -42,7 +41,7 @@ func TestCreateVerifyEmail(t *testing.T) {
 }
 
 func TestCreateVerifyEmailUsernameInvalid(t *testing.T) {
-	arg := params.CreateVerifyEmailRepo{
+	arg := CreateVerifyEmail{
 		Username:   "username invalid",
 		Email:      "email invalid",
 		SecretCode: util.RandomString(32),
@@ -58,7 +57,7 @@ func TestCreateVerifyEmailUsernameInvalid(t *testing.T) {
 func TestUpdateVerifyEmail(t *testing.T) {
 	verifyEmail := createRandomVerifyEmail(t)
 
-	arg := params.UpdateVerifyEmailRepo{
+	arg := UpdateVerifyEmail{
 		ID:         verifyEmail.ID,
 		SecretCode: verifyEmail.SecretCode,
 	}

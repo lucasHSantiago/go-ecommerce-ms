@@ -5,7 +5,6 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 )
 
 var (
@@ -13,7 +12,7 @@ var (
 	isValidFullName = regexp.MustCompile(`^[A-Za-z ]+$`)
 )
 
-func validateCreateUserParams(arg params.CreateUserApp) error {
+func validateCreateUserParams(arg CreateUser) error {
 	return validation.ValidateStruct(&arg,
 		validation.Field(&arg.Username, validateUsername()...),
 		validation.Field(&arg.Password, validatePassword()...),
@@ -21,7 +20,7 @@ func validateCreateUserParams(arg params.CreateUserApp) error {
 		validation.Field(&arg.Email, validateEmail()...))
 }
 
-func validateUpdateUserParams(arg params.UpdateUserApp) error {
+func validateUpdateUserParams(arg UpdateUser) error {
 	return validation.ValidateStruct(&arg,
 		validation.Field(&arg.Username, validateUsername()...),
 		validation.Field(&arg.FullName, validateFullName()...),
@@ -29,7 +28,7 @@ func validateUpdateUserParams(arg params.UpdateUserApp) error {
 		validation.Field(&arg.Email, validateEmail()...))
 }
 
-func validateLoginUserParams(arg params.LoginUserApp) error {
+func validateLoginUserParams(arg LoginUser) error {
 	return validation.ValidateStruct(&arg,
 		validation.Field(&arg.Username, validateUsername()...),
 		validation.Field(&arg.Password, validatePassword()...))

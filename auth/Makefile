@@ -36,10 +36,11 @@ sqlc:
 
 .PHONY: mock
 mock:
-	mockgen -source internal/application/user_repository.go -destination internal/application/mock/user_repository.go -package mockdb
-	mockgen -source internal/application/session_repository.go -destination internal/application/mock/session_repository.go -package mockdb
-	mockgen -source internal/application/verify_email_repository.go -destination internal/application/mock/verify_email_repository.go -package mockdb
 	mockgen -source internal/application/distributor/distributor.go -destination internal/application/distributor/mock/distributor.go -package mockwk
+	mockgen -package application -destination internal/application/mock/user_repository.go github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application UserRepository
+	mockgen -package application -destination internal/application/mock/session_repository.go github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application SessionRepository
+	mockgen -package application -destination internal/application/mock/verify_email_repository.go github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application VerifyEmailRepository
+
 
 .PHONY: redis
 redis:

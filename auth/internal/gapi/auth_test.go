@@ -10,7 +10,7 @@ import (
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application"
 	mockdb "github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/mock"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/infra"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/pkg/token"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/proto/gen"
@@ -37,7 +37,7 @@ func TestCreateUserAPI(t *testing.T) {
 				Password: password,
 			},
 			buildMocks: func(userRepository *mockdb.MockUserRepository) {
-				res := params.CreateUserTxRepoResult{
+				res := infra.CreateUserTxResult{
 					User: domain.User{
 						Username: user.Username,
 						FullName: user.FullName,
@@ -227,7 +227,7 @@ func TestCreateUserAPI(t *testing.T) {
 				userRepository.EXPECT().
 					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(params.CreateUserTxRepoResult{}, domain.ErrCreateUser)
+					Return(infra.CreateUserTxResult{}, domain.ErrCreateUser)
 			},
 			checkResponse: func(t *testing.T, res *gen.CreateUserResponse, err error) {
 				require.Error(t, err)
@@ -442,7 +442,7 @@ func TestVerifyEmailAPI(t *testing.T) {
 			buildMocks: func(verifyEmailRepository *mockdb.MockVerifyEmailRepository) {
 				user.IsEmailVerified = true
 
-				txRes := params.VerifyEmailTxRepoResult{
+				txRes := infra.VerifyEmailTxResult{
 					User:        user,
 					VerifyEmail: verifyEmail,
 				}

@@ -3,10 +3,10 @@ package infra
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
 	"github.com/rs/zerolog/log"
 )
@@ -50,7 +50,14 @@ email
 ) RETURNING username, hashed_password, full_name, email, password_changed_at, created_at, is_email_verified, role
 `
 
-func (u *UserRepository) CreateUser(ctx context.Context, arg params.CreateUserRepo) (*domain.User, error) {
+type CreateUser struct {
+	Username       string `json:"username"`
+	HashedPassword string `json:"hashed_password"`
+	FullName       string `json:"full_name"`
+	Email          string `json:"email"`
+}
+
+func (u *UserRepository) CreateUser(ctx context.Context, arg CreateUser) (*domain.User, error) {
 	args := []any{
 		arg.Username,
 		arg.HashedPassword,
@@ -97,7 +104,16 @@ WHERE
 RETURNING username, hashed_password, full_name, email, password_changed_at, created_at, is_email_verified, role
 `
 
-func (u *UserRepository) UpdateUser(ctx context.Context, arg params.UpdateUserRepo) (*domain.User, error) {
+type UpdateUser struct {
+	HashedPassword    *string    `json:"hashed_password"`
+	PasswordChangedAt *time.Time `json:"password_changed_at"`
+	FullName          *string    `json:"full_name"`
+	Email             *string    `json:"email"`
+	IsEmailVerified   *bool      `json:"is_email_verified"`
+	Username          string     `json:"username"`
+}
+
+func (u *UserRepository) UpdateUser(ctx context.Context, arg UpdateUser) (*domain.User, error) {
 	args := []any{
 		util.StringToText(arg.HashedPassword),
 		util.TimeToTimestamptz(arg.PasswordChangedAt),
@@ -117,12 +133,21 @@ func (u *UserRepository) UpdateUser(ctx context.Context, arg params.UpdateUserRe
 	return user, err
 }
 
-func (u *UserRepository) CreateUserTx(ctx context.Context, arg params.CreateUserTxRepo) (params.CreateUserTxRepoResult, error) {
-	var result params.CreateUserTxRepoResult
+type CreateUserTx struct {
+	CreateUser  `json:"create_user_repo"`
+	AfterCreate func(user domain.User) error `json:"after_create"`
+}
+
+type CreateUserTxResult struct {
+	User domain.User `json:"user"`
+}
+
+func (u *UserRepository) CreateUserTx(ctx context.Context, arg CreateUserTx) (CreateUserTxResult, error) {
+	var result CreateUserTxResult
 
 	err := execTx(ctx, u.connPool, func(tx pgx.Tx) error {
 		userRepository := NewUserRepository(tx)
-		user, err := userRepository.CreateUser(ctx, arg.CreateUserRepo)
+		user, err := userRepository.CreateUser(ctx, arg.CreateUser)
 		if err != nil {
 			return err
 		}

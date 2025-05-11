@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/params"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/proto/gen"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
@@ -15,13 +15,13 @@ import (
 )
 
 type UserApplication interface {
-	Create(ctx context.Context, arg params.CreateUserApp) (*domain.User, error)
-	Update(ctx context.Context, arg params.UpdateUserApp) (*domain.User, error)
-	Login(ctx context.Context, arg params.LoginUserApp) (*params.LoginUserAppResult, error)
+	Create(ctx context.Context, arg application.CreateUser) (*domain.User, error)
+	Update(ctx context.Context, arg application.UpdateUser) (*domain.User, error)
+	Login(ctx context.Context, arg application.LoginUser) (*application.LoginUserResult, error)
 }
 
 type VerifyEmailApplication interface {
-	VerifyEmail(ctx context.Context, arg params.VerifyEmailApp) (*params.VerifyEmailAppResult, error)
+	VerifyEmail(ctx context.Context, arg application.VerifyEmail) (*application.VerifyEmailResult, error)
 }
 
 type AuthServer struct {
