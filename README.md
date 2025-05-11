@@ -4,4 +4,5 @@ TODO:
  - [ ] move mailer to notification service
  - [ ] renew token route
  - [ ] recover panic in auth service
- - [ ] move config loader to lib project
+ - [ ] implement open api in the gateway
+ - [ ] create docker compose for api, redis, postgres

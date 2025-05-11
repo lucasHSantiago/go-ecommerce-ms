@@ -12,6 +12,8 @@ import (
 	"github.com/lucasHSantiago/go-ecommerce-ms/gateway/internal/gateway"
 	"github.com/lucasHSantiago/go-ecommerce-ms/gateway/internal/middleware"
 	"github.com/lucasHSantiago/go-ecommerce-ms/gateway/internal/util"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
@@ -38,12 +40,18 @@ func main() {
 
 	waitGroup, ctx := errgroup.WithContext(ctx)
 
+	startMetrics()
 	startServer(ctx, waitGroup, config)
 
 	err = waitGroup.Wait()
 	if err != nil {
 		log.Fatal().Err(err).Msg("error from wait group")
 	}
+}
+
+func startMetrics() {
+	prometheus.MustRegister(middleware.HttpRequestsTotal)
+	prometheus.MustRegister(middleware.HttpRequestDuration)
 }
 
 func startServer(ctx context.Context, waitGroup *errgroup.Group, config util.Config) {
@@ -60,11 +68,13 @@ func startServer(ctx context.Context, waitGroup *errgroup.Group, config util.Con
 		log.Fatal().Err(err).Msg("cannot initiate jwt token")
 	}
 
+	mux.Handle("/metrics", promhttp.Handler())
+
 	middleware := middleware.NewMiddleware(config, settings, jwtToken)
 
 	srv := &http.Server{
 		Addr:    config.ServerAddress,
-		Handler: middleware.RecoverPanic(middleware.AllowCors(middleware.Logger(middleware.RateLimit(middleware.Authenticate(mux))))),
+		Handler: middleware.RecoverPanic(middleware.Metric(middleware.AllowCors(middleware.Logger(middleware.RateLimit(middleware.Authenticate(mux)))))),
 	}
 
 	waitGroup.Go(func() error {
