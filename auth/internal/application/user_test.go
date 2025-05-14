@@ -11,12 +11,11 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/distributor"
-	mockwk "github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/distributor/mock"
-	mockdb "github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/mock"
+	mock "github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/mock"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/infra"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/worker"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/pkg/token"
 	"github.com/stretchr/testify/require"
 )
@@ -27,7 +26,7 @@ func TestCreateUserUseCase(t *testing.T) {
 	testCases := []struct {
 		name          string
 		arg           CreateUser
-		buildMocks    func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor)
+		buildMocks    func(userRepository *mock.MockUserRepository, taskDistributor *mock.MockTaskDistributor)
 		checkResponse func(t *testing.T, res *domain.User, err error)
 	}{
 		{
@@ -38,7 +37,7 @@ func TestCreateUserUseCase(t *testing.T) {
 				Email:    user.Email,
 				Password: password,
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
+			buildMocks: func(userRepository *mock.MockUserRepository, taskDistributor *mock.MockTaskDistributor) {
 				arg := infra.CreateUserTx{
 					CreateUser: infra.CreateUser{
 						Username: user.Username,
@@ -52,7 +51,7 @@ func TestCreateUserUseCase(t *testing.T) {
 					Times(1).
 					Return(infra.CreateUserTxResult{User: *user}, nil)
 
-				taskPayload := &distributor.PayloadSendVerifyEmail{
+				taskPayload := &worker.PayloadSendVerifyEmail{
 					Username: user.Username,
 				}
 
@@ -77,7 +76,7 @@ func TestCreateUserUseCase(t *testing.T) {
 				Email:    user.Email,
 				Password: password,
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
+			buildMocks: func(userRepository *mock.MockUserRepository, taskDistributor *mock.MockTaskDistributor) {
 				userRepository.EXPECT().
 					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -100,7 +99,7 @@ func TestCreateUserUseCase(t *testing.T) {
 				Email:    user.Email,
 				Password: password,
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
+			buildMocks: func(userRepository *mock.MockUserRepository, taskDistributor *mock.MockTaskDistributor) {
 				userRepository.EXPECT().
 					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -123,7 +122,7 @@ func TestCreateUserUseCase(t *testing.T) {
 				Email:    user.Email,
 				Password: password,
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
+			buildMocks: func(userRepository *mock.MockUserRepository, taskDistributor *mock.MockTaskDistributor) {
 				userRepository.EXPECT().
 					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -146,7 +145,7 @@ func TestCreateUserUseCase(t *testing.T) {
 				Email:    user.Email,
 				Password: password,
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
+			buildMocks: func(userRepository *mock.MockUserRepository, taskDistributor *mock.MockTaskDistributor) {
 				userRepository.EXPECT().
 					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -169,7 +168,7 @@ func TestCreateUserUseCase(t *testing.T) {
 				Email:    "",
 				Password: password,
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
+			buildMocks: func(userRepository *mock.MockUserRepository, taskDistributor *mock.MockTaskDistributor) {
 				userRepository.EXPECT().
 					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -192,7 +191,7 @@ func TestCreateUserUseCase(t *testing.T) {
 				Email:    "invalid",
 				Password: password,
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
+			buildMocks: func(userRepository *mock.MockUserRepository, taskDistributor *mock.MockTaskDistributor) {
 				userRepository.EXPECT().
 					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -215,7 +214,7 @@ func TestCreateUserUseCase(t *testing.T) {
 				Email:    user.Email,
 				Password: "",
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
+			buildMocks: func(userRepository *mock.MockUserRepository, taskDistributor *mock.MockTaskDistributor) {
 				userRepository.EXPECT().
 					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -238,7 +237,7 @@ func TestCreateUserUseCase(t *testing.T) {
 				Email:    user.Email,
 				Password: password,
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository, taskDistributor *mockwk.MockTaskDistributor) {
+			buildMocks: func(userRepository *mock.MockUserRepository, taskDistributor *mock.MockTaskDistributor) {
 				userRepository.EXPECT().
 					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(1).
@@ -258,10 +257,10 @@ func TestCreateUserUseCase(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			repositoryCtrl := gomock.NewController(t)
-			userRespository := mockdb.NewMockUserRepository(repositoryCtrl)
+			userRespository := mock.NewMockUserRepository(repositoryCtrl)
 
 			distributorCtrl := gomock.NewController(t)
-			taskDistrubutor := mockwk.NewMockTaskDistributor(distributorCtrl)
+			taskDistrubutor := mock.NewMockTaskDistributor(distributorCtrl)
 
 			tc.buildMocks(userRespository, taskDistrubutor)
 
@@ -284,7 +283,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 	tests := []struct {
 		name          string
 		arg           UpdateUser
-		buildMocks    func(userRepository *mockdb.MockUserRepository)
+		buildMocks    func(userRepository *mock.MockUserRepository)
 		checkResponse func(t *testing.T, updatedUser *domain.User, err error)
 	}{
 		{
@@ -294,7 +293,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 				FullName: &newFullname,
 				Email:    &newEmail,
 			},
-			buildMocks: func(store *mockdb.MockUserRepository) {
+			buildMocks: func(store *mock.MockUserRepository) {
 				arg := infra.UpdateUser{
 					Username: user.Username,
 					FullName: &newFullname,
@@ -332,7 +331,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 				Email:    &user.Email,
 				Password: &password,
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository) {
+			buildMocks: func(userRepository *mock.MockUserRepository) {
 				userRepository.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -351,7 +350,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 				Email:    &user.Email,
 				Password: &password,
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository) {
+			buildMocks: func(userRepository *mock.MockUserRepository) {
 				userRepository.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -370,7 +369,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 				Email:    &user.Email,
 				Password: &password,
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository) {
+			buildMocks: func(userRepository *mock.MockUserRepository) {
 				userRepository.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -389,7 +388,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 				Email:    &user.Email,
 				Password: &password,
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository) {
+			buildMocks: func(userRepository *mock.MockUserRepository) {
 				userRepository.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -408,7 +407,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 				Email:    new(string),
 				Password: &password,
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository) {
+			buildMocks: func(userRepository *mock.MockUserRepository) {
 				userRepository.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -427,7 +426,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 				Email:    &invalidEmail,
 				Password: &password,
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository) {
+			buildMocks: func(userRepository *mock.MockUserRepository) {
 				userRepository.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -446,7 +445,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 				Email:    &user.Email,
 				Password: new(string),
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository) {
+			buildMocks: func(userRepository *mock.MockUserRepository) {
 				userRepository.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -465,7 +464,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 				Email:    &user.Email,
 				Password: &password,
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository) {
+			buildMocks: func(userRepository *mock.MockUserRepository) {
 				userRepository.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(1).
@@ -480,7 +479,7 @@ func TestUpdateUserUseCase(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			repositoryCtrl := gomock.NewController(t)
-			userRespository := mockdb.NewMockUserRepository(repositoryCtrl)
+			userRespository := mock.NewMockUserRepository(repositoryCtrl)
 
 			tc.buildMocks(userRespository)
 
@@ -498,7 +497,7 @@ func TestLoginUserUseCase(t *testing.T) {
 	testCases := []struct {
 		name          string
 		arg           LoginUser
-		buildMocks    func(userRepository *mockdb.MockUserRepository, sessionRepository *mockdb.MockSessionRepository)
+		buildMocks    func(userRepository *mock.MockUserRepository, sessionRepository *mock.MockSessionRepository)
 		checkResponse func(t *testing.T, result *LoginUserResult, err error)
 	}{
 		{
@@ -507,7 +506,7 @@ func TestLoginUserUseCase(t *testing.T) {
 				Username: user.Username,
 				Password: password,
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository, sessionRepository *mockdb.MockSessionRepository) {
+			buildMocks: func(userRepository *mock.MockUserRepository, sessionRepository *mock.MockSessionRepository) {
 				userRepository.EXPECT().
 					GetUser(gomock.Any(), gomock.Eq(user.Username)).
 					Times(1).
@@ -533,7 +532,7 @@ func TestLoginUserUseCase(t *testing.T) {
 				Username: user.Username,
 				Password: "incorrect",
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository, sessionRepository *mockdb.MockSessionRepository) {
+			buildMocks: func(userRepository *mock.MockUserRepository, sessionRepository *mock.MockSessionRepository) {
 				userRepository.EXPECT().
 					GetUser(gomock.Any(), gomock.Eq(user.Username)).
 					Times(1).
@@ -555,7 +554,7 @@ func TestLoginUserUseCase(t *testing.T) {
 				Username: "invalid-user#1",
 				Password: password,
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository, sessionRepository *mockdb.MockSessionRepository) {
+			buildMocks: func(userRepository *mock.MockUserRepository, sessionRepository *mock.MockSessionRepository) {
 				userRepository.EXPECT().
 					GetUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -576,7 +575,7 @@ func TestLoginUserUseCase(t *testing.T) {
 				Username: user.Username,
 				Password: "short",
 			},
-			buildMocks: func(userRepository *mockdb.MockUserRepository, sessionRepository *mockdb.MockSessionRepository) {
+			buildMocks: func(userRepository *mock.MockUserRepository, sessionRepository *mock.MockSessionRepository) {
 				userRepository.EXPECT().
 					GetUser(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -596,10 +595,10 @@ func TestLoginUserUseCase(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			userCtrl := gomock.NewController(t)
-			userRepository := mockdb.NewMockUserRepository(userCtrl)
+			userRepository := mock.NewMockUserRepository(userCtrl)
 
 			sessionCtrl := gomock.NewController(t)
-			sessionRepository := mockdb.NewMockSessionRepository(sessionCtrl)
+			sessionRepository := mock.NewMockSessionRepository(sessionCtrl)
 
 			tc.buildMocks(userRepository, sessionRepository)
 

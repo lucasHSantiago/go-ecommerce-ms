@@ -4,31 +4,39 @@ import (
 	"context"
 
 	"github.com/hibiken/asynq"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/infra"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/mail"
 	"github.com/rs/zerolog/log"
 )
 
-type TaskProcessor interface {
-	Start() error
-	Shutdown()
-	ProcessTaskSendVerifyEmail(ctx context.Context, task *asynq.Task) error
+const (
+	CriticalQueue = "critical"
+	DefaultQueue  = "default"
+)
+
+type UserReader interface {
+	GetUser(ctx context.Context, username string) (*domain.User, error)
+}
+
+type VerifyEmailCreator interface {
+	CreateVerifyEmail(ctx context.Context, arg infra.CreateVerifyEmail) (*domain.VerifyEmail, error)
 }
 
 type RedisTaskProcessor struct {
 	server                *asynq.Server
-	userRepository        application.UserRepository
-	verifyEmailRepository application.VerifyEmailRepository
+	userRepository        UserReader
+	verifyEmailRepository VerifyEmailCreator
 	mailer                mail.EmailSender
 }
 
-func NewRedisTaskProcessor(redisOpt asynq.RedisClientOpt, userRepository application.UserRepository, verifyEmailRepository application.VerifyEmailRepository, mailer mail.EmailSender) *RedisTaskProcessor {
+func NewRedisTaskProcessor(redisOpt asynq.RedisClientOpt, userRepository UserReader, verifyEmailRepository VerifyEmailCreator, mailer mail.EmailSender) *RedisTaskProcessor {
 	server := asynq.NewServer(
 		redisOpt,
 		asynq.Config{
 			Queues: map[string]int{
-				application.CriticalQueue: 10,
-				application.DefaultQueue:  5,
+				CriticalQueue: 10,
+				DefaultQueue:  5,
 			},
 			ErrorHandler: asynq.ErrorHandlerFunc(func(_ context.Context, task *asynq.Task, err error) {
 				log.Error().

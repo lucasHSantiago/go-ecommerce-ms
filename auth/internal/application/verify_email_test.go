@@ -7,7 +7,7 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/golang/mock/gomock"
-	mockdb "github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/mock"
+	mock "github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/mock"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/infra"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
@@ -33,7 +33,7 @@ func TestVerifyEmailUseCase(t *testing.T) {
 	testCases := []struct {
 		name          string
 		arg           VerifyEmail
-		buildMocks    func(arg VerifyEmail, verifyEmailRepository *mockdb.MockVerifyEmailRepository)
+		buildMocks    func(arg VerifyEmail, verifyEmailRepository *mock.MockVerifyEmailRepository)
 		checkResponse func(t *testing.T, res *VerifyEmailResult, err error)
 	}{
 		{
@@ -42,7 +42,7 @@ func TestVerifyEmailUseCase(t *testing.T) {
 				EmailId:    verifyEmail.ID,
 				SecretCode: verifyEmail.SecretCode,
 			},
-			buildMocks: func(arg VerifyEmail, verifyEmailRepository *mockdb.MockVerifyEmailRepository) {
+			buildMocks: func(arg VerifyEmail, verifyEmailRepository *mock.MockVerifyEmailRepository) {
 				txArg := infra.VerifyEmailTx{
 					EmailId:     arg.EmailId,
 					SecreteCode: arg.SecretCode,
@@ -71,7 +71,7 @@ func TestVerifyEmailUseCase(t *testing.T) {
 				EmailId:    0,
 				SecretCode: verifyEmail.SecretCode,
 			},
-			buildMocks: func(arg VerifyEmail, verifyEmailRepository *mockdb.MockVerifyEmailRepository) {
+			buildMocks: func(arg VerifyEmail, verifyEmailRepository *mock.MockVerifyEmailRepository) {
 				verifyEmailRepository.EXPECT().
 					VerifyEmailTx(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -89,7 +89,7 @@ func TestVerifyEmailUseCase(t *testing.T) {
 				EmailId:    verifyEmail.ID,
 				SecretCode: "invalid",
 			},
-			buildMocks: func(arg VerifyEmail, verifyEmailRepository *mockdb.MockVerifyEmailRepository) {
+			buildMocks: func(arg VerifyEmail, verifyEmailRepository *mock.MockVerifyEmailRepository) {
 				verifyEmailRepository.EXPECT().
 					VerifyEmailTx(gomock.Any(), gomock.Any()).
 					Times(0)
@@ -106,7 +106,7 @@ func TestVerifyEmailUseCase(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			repositoryCtrl := gomock.NewController(t)
-			verifyEmailRespository := mockdb.NewMockVerifyEmailRepository(repositoryCtrl)
+			verifyEmailRespository := mock.NewMockVerifyEmailRepository(repositoryCtrl)
 			tc.buildMocks(tc.arg, verifyEmailRespository)
 
 			verifyEmailApplication := NewVerifyEmailApplication(verifyEmailRespository)

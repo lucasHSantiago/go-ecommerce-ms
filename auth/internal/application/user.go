@@ -7,10 +7,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
-	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/application/distributor"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/domain"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/infra"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/util"
+	"github.com/lucasHSantiago/go-ecommerce-ms/auth/internal/worker"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/pkg/token"
 	"github.com/rs/zerolog/log"
 )
@@ -31,15 +31,19 @@ type JwtTokenMaker interface {
 	CreateToken(username string, role string, duration time.Duration) (string, *token.Payload, error)
 }
 
+type TaskDistributor interface {
+	DistributeTaskSendVerifyEmail(ctx context.Context, payload *worker.PayloadSendVerifyEmail, opts ...asynq.Option) error
+}
+
 type UserApplication struct {
 	userRepository     UserRepository
 	sessionRespository SessionRepository
-	taskDistributor    distributor.TaskDistributor
+	taskDistributor    TaskDistributor
 	tokenMaker         JwtTokenMaker
 	config             *util.Config
 }
 
-func NewUserApplication(userRepository UserRepository, sessionRepository SessionRepository, taskDistributor distributor.TaskDistributor, tokenMaker JwtTokenMaker, config *util.Config) *UserApplication {
+func NewUserApplication(userRepository UserRepository, sessionRepository SessionRepository, taskDistributor TaskDistributor, tokenMaker JwtTokenMaker, config *util.Config) *UserApplication {
 	return &UserApplication{
 		userRepository:     userRepository,
 		sessionRespository: sessionRepository,
@@ -75,14 +79,14 @@ func (u *UserApplication) Create(ctx context.Context, arg CreateUser) (*domain.U
 			Email:          arg.Email,
 		},
 		AfterCreate: func(user domain.User) error {
-			taskPayload := &distributor.PayloadSendVerifyEmail{
+			taskPayload := &worker.PayloadSendVerifyEmail{
 				Username: user.Username,
 			}
 
 			opts := []asynq.Option{
 				asynq.MaxRetry(10),
 				asynq.ProcessIn(10 * time.Second),
-				asynq.Queue(CriticalQueue),
+				asynq.Queue(worker.CriticalQueue),
 			}
 
 			return u.taskDistributor.DistributeTaskSendVerifyEmail(ctx, taskPayload, opts...)
