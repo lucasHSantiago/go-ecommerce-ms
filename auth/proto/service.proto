@@ -5,8 +5,19 @@ package gen;
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 import "google/rpc/error_details.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/lucasHSantiago/gobank/proto/gen";
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "Auth Service"
+    version: "1.0"
+    contact: {
+      name: "Lucas H. Santiago"
+      url: "https://github.com/lucashsantiago"
+    }
+  }
+};
 
 message User {
   string username = 1;
@@ -67,11 +78,19 @@ service AuthService {
       post: "/v1/user"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this API to create a new user"
+      summary: "Create new user"
+    };
   }
   rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {
     option (google.api.http) = {
       patch: "/v1/user"
       body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this API to update a user"
+      summary: "Update user"
     };
   }
   rpc LoginUser(LoginUserRequest) returns (LoginUserResponse) {
@@ -79,8 +98,16 @@ service AuthService {
       post: "/v1/user/login"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this API to login user and get access and refresh tokens"
+      summary: "Login user"
+    };
   }
   rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse) {
     option (google.api.http) = {get: "/v1/user/verify-email"};
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this API to verify user's email address"
+      summary: "Verify Email"
+    };
   }
 }

@@ -7,6 +7,7 @@
 package gen
 
 import (
+	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	_ "google.golang.org/genproto/googleapis/rpc/errdetails"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -560,7 +561,7 @@ var File_service_proto protoreflect.FileDescriptor
 
 const file_service_proto_rawDesc = "" +
 	"\n" +
-	"\rservice.proto\x12\x03gen\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/rpc/error_details.proto\"\xdc\x01\n" +
+	"\rservice.proto\x12\x03gen\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/rpc/error_details.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xdc\x01\n" +
 	"\x04User\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x1b\n" +
 	"\tfull_name\x18\x02 \x01(\tR\bfullName\x12\x14\n" +
@@ -603,14 +604,17 @@ const file_service_proto_rawDesc = "" +
 	"secretCode\"6\n" +
 	"\x13VerifyEmailResponse\x12\x1f\n" +
 	"\vis_verified\x18\x01 \x01(\bR\n" +
-	"isVerified2\xed\x02\n" +
-	"\vAuthService\x12R\n" +
+	"isVerified2\xe2\x04\n" +
+	"\vAuthService\x12\x89\x01\n" +
 	"\n" +
-	"CreateUser\x12\x16.gen.CreateUserRequest\x1a\x17.gen.CreateUserResponse\"\x13\x82\xd3\xe4\x93\x02\r:\x01*\"\b/v1/user\x12R\n" +
+	"CreateUser\x12\x16.gen.CreateUserRequest\x1a\x17.gen.CreateUserResponse\"J\x92A4\x12\x0fCreate new user\x1a!Use this API to create a new user\x82\xd3\xe4\x93\x02\r:\x01*\"\b/v1/user\x12\x81\x01\n" +
 	"\n" +
-	"UpdateUser\x12\x16.gen.UpdateUserRequest\x1a\x17.gen.UpdateUserResponse\"\x13\x82\xd3\xe4\x93\x02\r:\x01*2\b/v1/user\x12U\n" +
-	"\tLoginUser\x12\x15.gen.LoginUserRequest\x1a\x16.gen.LoginUserResponse\"\x19\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/v1/user/login\x12_\n" +
-	"\vVerifyEmail\x12\x17.gen.VerifyEmailRequest\x1a\x18.gen.VerifyEmailResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/user/verify-emailB,Z*github.com/lucasHSantiago/gobank/proto/genb\x06proto3"
+	"UpdateUser\x12\x16.gen.UpdateUserRequest\x1a\x17.gen.UpdateUserResponse\"B\x92A,\x12\vUpdate user\x1a\x1dUse this API to update a user\x82\xd3\xe4\x93\x02\r:\x01*2\b/v1/user\x12\xa2\x01\n" +
+	"\tLoginUser\x12\x15.gen.LoginUserRequest\x1a\x16.gen.LoginUserResponse\"f\x92AJ\x12\n" +
+	"Login user\x1a<Use this API to login user and get access and refresh tokens\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/v1/user/login\x12\x9d\x01\n" +
+	"\vVerifyEmail\x12\x17.gen.VerifyEmailRequest\x1a\x18.gen.VerifyEmailResponse\"[\x92A;\x12\fVerify Email\x1a+Use this API to verify user's email address\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/user/verify-emailB|\x92AM\x12K\n" +
+	"\fAuth Service\"6\n" +
+	"\x11Lucas H. Santiago\x12!https://github.com/lucashsantiago2\x031.0Z*github.com/lucasHSantiago/gobank/proto/genb\x06proto3"
 
 var (
 	file_service_proto_rawDescOnce sync.Once

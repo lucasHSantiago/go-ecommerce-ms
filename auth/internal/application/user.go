@@ -34,12 +34,12 @@ type JwtTokenMaker interface {
 type UserApplication struct {
 	userRepository     UserRepository
 	sessionRespository SessionRepository
-	taskDistributor    TaskDistributor
+	taskDistributor    distributor.TaskDistributor
 	tokenMaker         JwtTokenMaker
 	config             *util.Config
 }
 
-func NewUserApplication(userRepository UserRepository, sessionRepository SessionRepository, taskDistributor TaskDistributor, tokenMaker JwtTokenMaker, config *util.Config) *UserApplication {
+func NewUserApplication(userRepository UserRepository, sessionRepository SessionRepository, taskDistributor distributor.TaskDistributor, tokenMaker JwtTokenMaker, config *util.Config) *UserApplication {
 	return &UserApplication{
 		userRepository:     userRepository,
 		sessionRespository: sessionRepository,

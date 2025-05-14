@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/signal"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/lucasHSantiago/go-ecommerce-ms/auth/pkg/token"
+	"github.com/lucasHSantiago/go-ecommerce-ms/gateway/api"
 	"github.com/lucasHSantiago/go-ecommerce-ms/gateway/internal/gateway"
 	"github.com/lucasHSantiago/go-ecommerce-ms/gateway/internal/middleware"
 	"github.com/lucasHSantiago/go-ecommerce-ms/gateway/internal/util"
@@ -17,6 +19,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+
 	"golang.org/x/sync/errgroup"
 )
 
@@ -69,12 +72,21 @@ func startServer(ctx context.Context, waitGroup *errgroup.Group, config util.Con
 	middleware := middleware.NewMiddleware(config, settings, jwtToken)
 
 	routes := chi.NewRouter()
+
+	routes.Use(middleware.AllowCors)
+
+	fsys, err := fs.Sub(api.StaticSwaggerFS, "swagger")
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot initiate swagger file server")
+	}
+
+	routes.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(fsys))))
+
 	routes.Get("/metrics", promhttp.Handler().ServeHTTP)
 
 	routes.With(
 		middleware.RecoverPanic,
 		middleware.Metric,
-		middleware.AllowCors,
 		middleware.Logger,
 		middleware.RateLimit,
 		middleware.Authenticate,
