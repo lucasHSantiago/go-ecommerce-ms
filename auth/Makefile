@@ -4,7 +4,7 @@ server:
 
 .PHONY: grpcui
 grpcui:
-	grpcui -plaintext localhost:8080
+	grpcui -plaintext localhost:8081
 
 .PHONY: postgres
 postgres:
@@ -29,10 +29,6 @@ migratedown:
 .PHONY: new_migration
 new_migration:
 	migrate create -ext sql -dir internal/infra/migrations -seq $(name)
-
-.PHONY: sqlc
-sqlc:
-	sqlc generate
 
 .PHONY: mock
 mock:

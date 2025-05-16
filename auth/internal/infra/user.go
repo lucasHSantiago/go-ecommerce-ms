@@ -19,26 +19,6 @@ func NewUserRepository(connPool DBTX) *UserRepository {
 	return &UserRepository{connPool}
 }
 
-func getUserError(err error, defaultReturn error, msg string) error {
-	if errors.Is(err, ErrRecordNotFound) {
-		return domain.ErrUserNotFound
-	}
-
-	if pgError := GetPgError(err); pgError != nil {
-		if pgError.Code == UniqueViolation {
-			switch pgError.ConstraintName {
-			case "users_pkey":
-				return domain.ErrUsernameAlreadyExist
-			case "users_email_key":
-				return domain.ErrEmailAlreadyExist
-			}
-		}
-	}
-
-	log.Error().Err(err).Msg(msg)
-	return defaultReturn
-}
-
 const createUser = `
 INSERT INTO users (
 	username,
@@ -158,4 +138,24 @@ func (u *UserRepository) CreateUserTx(ctx context.Context, arg CreateUserTx) (Cr
 	})
 
 	return result, err
+}
+
+func getUserError(err error, defaultReturn error, msg string) error {
+	if errors.Is(err, ErrRecordNotFound) {
+		return domain.ErrUserNotFound
+	}
+
+	if pgError := GetPgError(err); pgError != nil {
+		if pgError.Code == UniqueViolation {
+			switch pgError.ConstraintName {
+			case "users_pkey":
+				return domain.ErrUsernameAlreadyExist
+			case "users_email_key":
+				return domain.ErrEmailAlreadyExist
+			}
+		}
+	}
+
+	log.Error().Err(err).Msg(msg)
+	return defaultReturn
 }
